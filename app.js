@@ -127,7 +127,7 @@
         <p class="preco">${p.precoAntigo ? `<s>${brl(p.precoAntigo)}</s>` : ''}<strong>${brl(p.preco)}</strong></p>
 
         <p class="rotulo">Tamanho <a href="#medidas" class="link-medidas">ver medidas</a></p>
-        <div class="tamanhos">${LOJA.tamanhos.map((t) => `<button type="button" data-tam="${t}" ${disponivel(p, t) ? '' : 'disabled title="Esgotado"'}>${t}</button>`).join('')}</div>
+        <div class="tamanhos">${tamanhosDe(p).map((t) => `<button type="button" data-tam="${t}" ${disponivel(p, t) ? '' : 'disabled title="Esgotado"'}>${t}</button>`).join('')}</div>
         <p class="estoque-aviso" id="m-estoque"></p>
 
         <label class="check"><input type="checkbox" id="m-personalizar"> Personalizar com nome e número <b>+ ${brl(LOJA.precoPersonalizacao)}</b></label>
@@ -492,7 +492,7 @@
     .then((lista) => {
       produtos = lista;
       // Descarta do carrinho salvo o que saiu do catálogo
-      carrinho = carrinho.filter((i) => produto(i.id) && LOJA.tamanhos.includes(i.tamanho));
+      carrinho = carrinho.filter((i) => produto(i.id) && tamanhosDe(produto(i.id)).includes(i.tamanho));
       const destaque = produtos.slice(0, 2);
       $('#hero-camisas').innerHTML = destaque.map((p) => `<div class="hero__camisa">${midia(p)}</div>`).join('');
       renderGrade();

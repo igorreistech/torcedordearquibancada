@@ -10,7 +10,7 @@ const LOJA = {
   freteGratisAPartirDe: 2,                // nº de camisas para frete grátis
   frete: 24.9,                            // frete abaixo do mínimo para frete grátis
   maxParcelas: 12,                        // parcelas no cartão (texto do site)
-  tamanhos: ['P', 'M', 'G', 'GG', 'XGG'],
+  tamanhos: ['P', 'M', 'G', 'GG', 'XGG'],      // tamanhos das camisas sob encomenda
   // InfiniteTag da conta InfinitePay, sem o $ (aparece no canto superior do app).
   // No app: Vendas > Checkout > Configurações > "Habilitar Checkout Integrado".
   infinitepayHandle: 'torcedor',
@@ -68,9 +68,11 @@ const PRODUTOS_PADRAO = [
 // ============================================================
 const arredondar = (v) => Math.round(v * 100) / 100;
 
-// Quantas unidades há de um tamanho. Camisa sem controle de estoque (sob encomenda) não tem limite.
-const disponivel = (p, tamanho) => (p.estoque ? Math.max(0, p.estoque[tamanho] || 0) : Infinity);
-const esgotado = (p) => Boolean(p.estoque) && LOJA.tamanhos.every((t) => disponivel(p, t) === 0);
+// Estoque de cada camisa: lista de { tamanho, qtd } cadastrada no painel.
+// Camisa sem estoque (null) é sob encomenda: vende nos tamanhos padrão, sem limite.
+const tamanhosDe = (p) => (p.estoque ? p.estoque.map((e) => e.tamanho) : LOJA.tamanhos);
+const disponivel = (p, tamanho) => (p.estoque ? Math.max(0, p.estoque.find((e) => e.tamanho === tamanho)?.qtd || 0) : Infinity);
+const esgotado = (p) => Boolean(p.estoque) && p.estoque.every((e) => !(e.qtd > 0));
 
 // Confere se há estoque para o carrinho todo, somando as linhas do mesmo tamanho.
 function conferirEstoque(itens, produtos) {
@@ -93,8 +95,10 @@ function conferirEstoque(itens, produtos) {
 function baixarEstoque(produtos, itens) {
   return produtos.map((p) => {
     if (!p.estoque) return p;
-    const estoque = { ...p.estoque };
-    for (const i of itens) if (i.id === p.id) estoque[i.tamanho] = Math.max(0, (estoque[i.tamanho] || 0) - i.qtd);
+    const estoque = p.estoque.map((e) => {
+      const vendido = itens.filter((i) => i.id === p.id && i.tamanho === e.tamanho).reduce((s, i) => s + i.qtd, 0);
+      return { ...e, qtd: Math.max(0, e.qtd - vendido) };
+    });
     return { ...p, estoque };
   });
 }
@@ -106,7 +110,7 @@ function calcularPedido(itens, produtos) {
   const linhas = itens.map((i) => {
     const p = produtos.find((x) => x.id === i.id && x.ativo !== false);
     if (!p) throw new Error('Uma das camisas do carrinho não está mais disponível.');
-    if (!LOJA.tamanhos.includes(i.tamanho)) throw new Error('Tamanho inválido.');
+    if (!tamanhosDe(p).includes(i.tamanho)) throw new Error('Tamanho inválido.');
     const qtd = Number(i.qtd);
     if (!Number.isInteger(qtd) || qtd < 1 || qtd > 20) throw new Error('Quantidade inválida.');
     const nome = String(i.nome || '').trim().toUpperCase().slice(0, 12);
@@ -139,6 +143,21 @@ function validarCliente(c = {}) {
   return r;
 }
 
+// Normaliza a lista de tamanhos e quantidades do painel. null = sob encomenda.
+function lerEstoque(estoque) {
+  if (!estoque || typeof estoque !== 'object') return null;
+  const linhas = Array.isArray(estoque) ? estoque : Object.entries(estoque).map(([tamanho, qtd]) => ({ tamanho, qtd }));
+  const vistos = new Set();
+  const r = [];
+  for (const e of linhas) {
+    const tamanho = String(e?.tamanho ?? '').trim().toUpperCase().slice(0, 8);
+    if (!tamanho || vistos.has(tamanho)) continue;
+    vistos.add(tamanho);
+    r.push({ tamanho, qtd: Math.min(9999, Math.max(0, Math.trunc(Number(e.qtd) || 0))) });
+  }
+  return r.length ? r.slice(0, 20) : null;
+}
+
 // Valida e normaliza uma camisa vinda do painel. Lança Error com mensagem para o dono.
 function validarProduto(p = {}) {
   const txt = (v, max) => String(v ?? '').trim().slice(0, max);
@@ -156,9 +175,7 @@ function validarProduto(p = {}) {
     padrao: PADROES.some((x) => x.id === p.padrao) ? p.padrao : 'solido',
     tags: (Array.isArray(p.tags) ? p.tags : []).filter((t) => TAGS.some((x) => x.id === t)),
     fotos: (Array.isArray(p.fotos) ? p.fotos : []).filter((u) => /^https:\/\/\S+$/.test(u)).slice(0, 8),
-    estoque: p.estoque && typeof p.estoque === 'object'
-      ? Object.fromEntries(LOJA.tamanhos.map((t) => [t, Math.min(9999, Math.max(0, Math.trunc(Number(p.estoque[t]) || 0)))]))
-      : null,
+    estoque: lerEstoque(p.estoque),
     ativo: p.ativo !== false,
   };
   const quem = r.nome ? `"${r.nome}": ` : '';
@@ -171,5 +188,5 @@ function validarProduto(p = {}) {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { LOJA, CATEGORIAS, PADROES, TAGS, PRODUTOS_PADRAO, calcularPedido, conferirEstoque, baixarEstoque, validarCliente, validarProduto };
+  module.exports = { LOJA, CATEGORIAS, PADROES, TAGS, PRODUTOS_PADRAO, tamanhosDe, calcularPedido, conferirEstoque, baixarEstoque, validarCliente, validarProduto };
 }

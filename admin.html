@@ -86,10 +86,19 @@
         </fieldset>
 
         <fieldset>
-          <legend>Estoque</legend>
-          <label class="check"><input type="checkbox" name="controlar" id="controlar"> Controlar estoque por tamanho</label>
-          <p class="ajuda" id="estoque-ajuda">Desmarcado: a camisa vende sem limite (sob encomenda).</p>
-          <div class="adm-estoque" id="estoque" hidden></div>
+          <legend>Tamanhos e quantidades</legend>
+          <p class="ajuda" id="estoque-ajuda"></p>
+          <div id="estoque-area">
+            <div class="adm-estoque" id="estoque"></div>
+            <div class="adm-estoque__acoes">
+              <button type="button" class="btn btn--fantasma" id="mais-tamanho">+ Adicionar tamanho</button>
+              <span class="ajuda">Preencher:</span>
+              <button type="button" class="adm-chip" data-grade="P,M,G,GG,XGG">Adulto</button>
+              <button type="button" class="adm-chip" data-grade="2,4,6,8,10,12,14,16">Infantil</button>
+              <button type="button" class="adm-chip" data-grade="P,M,G,GG">Feminina</button>
+            </div>
+          </div>
+          <label class="check"><input type="checkbox" name="encomenda" id="encomenda"> Sob encomenda (sem limite de estoque)</label>
         </fieldset>
 
         <details>
