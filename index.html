@@ -76,7 +76,7 @@
         </div>
       </div>
 
-      <div class="grade" id="grade"></div>
+      <div class="grade" id="grade"><p class="vazio">Carregando camisas…</p></div>
     </section>
 
     <section class="medidas container" id="medidas">
@@ -108,7 +108,7 @@
       </details>
       <details>
         <summary>Como funciona o pedido?</summary>
-        <p>Monte seu carrinho aqui no site e clique em “Finalizar no WhatsApp”. O pedido chega pronto pra gente, confirmamos disponibilidade, frete e enviamos o Pix ou link de pagamento.</p>
+        <p>Monte seu carrinho, preencha o endereço de entrega e pague ali mesmo, com cartão de crédito (até 3x) ou Pix com 5% de desconto. O pagamento é processado pelo Mercado Pago, e a confirmação chega no seu e-mail.</p>
       </details>
       <details>
         <summary>Qual o prazo de entrega?</summary>
@@ -154,22 +154,56 @@
   <div class="sombra" id="sombra" hidden></div>
   <aside class="gaveta" id="gaveta" aria-label="Carrinho" aria-hidden="true">
     <div class="gaveta__topo">
-      <h2>Seu carrinho</h2>
+      <button class="voltar" id="voltar" aria-label="Voltar" hidden>←</button>
+      <h2 id="gaveta-titulo">Seu carrinho</h2>
       <button class="modal__fechar" id="fechar-carrinho" aria-label="Fechar carrinho">×</button>
     </div>
-    <div class="gaveta__itens" id="itens"></div>
-    <div class="gaveta__rodape" id="gaveta-rodape">
+    <ol class="passos" id="passos" hidden>
+      <li data-passo="carrinho">Carrinho</li>
+      <li data-passo="dados">Entrega</li>
+      <li data-passo="pagamento">Pagamento</li>
+    </ol>
+
+    <div class="gaveta__corpo" id="gaveta-corpo">
+      <section data-etapa="carrinho" id="itens"></section>
+
+      <form data-etapa="dados" id="form-dados" class="form-dados" novalidate hidden>
+        <label>Nome completo<input name="nome" autocomplete="name" required></label>
+        <label>E-mail<input name="email" type="email" autocomplete="email" required></label>
+        <div class="duas">
+          <label>CPF<input name="cpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" required></label>
+          <label>Celular<input name="telefone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="15" placeholder="(67) 90000-0000" required></label>
+        </div>
+        <div class="duas">
+          <label>CEP<input name="cep" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000" required></label>
+          <label>Número<input name="numero" required></label>
+        </div>
+        <label>Rua<input name="rua" autocomplete="address-line1" required></label>
+        <label>Complemento<input name="complemento" placeholder="Apto, bloco… (opcional)"></label>
+        <label>Bairro<input name="bairro" required></label>
+        <div class="duas duas--uf">
+          <label>Cidade<input name="cidade" autocomplete="address-level2" required></label>
+          <label>UF<input name="uf" maxlength="2" autocomplete="address-level1" required></label>
+        </div>
+        <div id="dados-resumo"></div>
+        <p class="erro" id="dados-erro"></p>
+        <button class="btn btn--primario btn--bloco">Ir para o pagamento</button>
+      </form>
+
+      <section data-etapa="pagamento" hidden>
+        <div id="pag-resumo"></div>
+        <div id="brick"></div>
+        <p class="erro" id="pag-erro"></p>
+      </section>
+
+      <section data-etapa="resultado" id="resultado" hidden></section>
+    </div>
+
+    <div class="gaveta__rodape" id="gaveta-rodape" hidden>
       <p class="frete" id="frete"></p>
-      <div class="subtotal"><span>Subtotal</span><strong id="subtotal">R$ 0,00</strong></div>
-      <label>Seu nome<input type="text" id="cli-nome" autocomplete="name" placeholder="Como podemos te chamar?"></label>
-      <label>CEP (para calcular o frete)<input type="text" id="cli-cep" inputmode="numeric" autocomplete="postal-code" placeholder="00000-000" maxlength="9"></label>
-      <label>Pagamento
-        <select id="cli-pagamento">
-          <option>Pix (5% de desconto)</option>
-          <option>Cartão de crédito</option>
-        </select>
-      </label>
-      <button class="btn btn--whats" id="finalizar">Finalizar no WhatsApp</button>
+      <div id="resumo-carrinho"></div>
+      <button class="btn btn--primario btn--bloco" id="continuar">Continuar</button>
+      <p class="seguro">🔒 Pagamento seguro com cartão ou Pix via Mercado Pago</p>
     </div>
   </aside>
 

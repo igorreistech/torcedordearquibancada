@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Painel — Torcedor de Arquibancada</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230d0f0e'/%3E%3Cpath d='M5 25h22v-4H5zM9 19h18v-4H9zM13 13h14V9H13z' fill='%23f5d90a'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <header class="topo">
+    <div class="container topo__linha">
+      <a href="/" class="logo" target="_blank" rel="noopener">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 27h26v-5H3zM8 20h21v-5H8zM13 13h16V8H13z" /></svg>
+        <span>Torcedor<br><b>Painel da loja</b></span>
+      </a>
+      <button class="btn btn--fantasma adm-sair" id="sair" hidden>Sair</button>
+    </div>
+  </header>
+
+  <main class="container adm">
+    <!-- Login -->
+    <form class="adm-login" id="login" hidden>
+      <h1>Entrar no painel</h1>
+      <label>Senha<input type="password" name="senha" autocomplete="current-password" required autofocus></label>
+      <p class="erro" id="login-erro"></p>
+      <button class="btn btn--primario btn--bloco">Entrar</button>
+    </form>
+
+    <!-- Lista de camisas -->
+    <section id="painel" hidden>
+      <div class="adm-cabecalho">
+        <div>
+          <h1>Camisas</h1>
+          <p id="contagem"></p>
+        </div>
+        <button class="btn btn--primario" id="nova">+ Nova camisa</button>
+      </div>
+      <input type="search" id="adm-busca" class="adm-busca" placeholder="Buscar camisa…">
+      <div class="adm-lista" id="lista"></div>
+    </section>
+  </main>
+
+  <!-- Editor -->
+  <dialog class="modal adm-editor" id="editor">
+    <form id="form-produto" class="adm-form" novalidate>
+      <div class="adm-form__topo">
+        <h2 id="editor-titulo">Nova camisa</h2>
+        <button type="button" class="modal__fechar" id="fechar-editor" aria-label="Fechar">×</button>
+      </div>
+
+      <div class="adm-form__corpo">
+        <fieldset>
+          <legend>Fotos</legend>
+          <p class="ajuda">A primeira foto é a capa. Use as setas para mudar a ordem. Até 8 fotos.</p>
+          <div class="adm-fotos" id="fotos"></div>
+          <label class="adm-enviar">
+            <input type="file" id="arquivos" accept="image/*" multiple hidden>
+            <span>+ Adicionar fotos</span>
+          </label>
+          <p class="ajuda" id="envio-status"></p>
+        </fieldset>
+
+        <fieldset>
+          <legend>Informações</legend>
+          <label>Nome da camisa<input name="nome" placeholder="Ex.: Flamengo I" required maxlength="60"></label>
+          <div class="duas">
+            <label>Temporada<input name="temporada" placeholder="Ex.: 25/26" maxlength="12"></label>
+            <label>Versão
+              <input name="versao" list="versoes" placeholder="Torcedor" maxlength="20">
+              <datalist id="versoes"><option>Torcedor</option><option>Jogador</option><option>Retrô</option><option>Feminina</option><option>Infantil</option></datalist>
+            </label>
+          </div>
+          <label>Categoria<select name="categoria" id="categoria" required></select></label>
+          <div class="duas">
+            <label>Preço (R$)<input name="preco" inputmode="decimal" placeholder="149,90" required></label>
+            <label>Preço “de” (opcional)<input name="precoAntigo" inputmode="decimal" placeholder="199,90"></label>
+          </div>
+          <div class="adm-opcoes" id="tags"></div>
+          <label class="check"><input type="checkbox" name="ativo" checked> Mostrar no site</label>
+        </fieldset>
+
+        <details>
+          <summary>Ilustração (usada só quando não há foto)</summary>
+          <div class="adm-ilustracao">
+            <div class="adm-cores">
+              <label>Cor base<input type="color" name="cor0"></label>
+              <label>Cor secundária<input type="color" name="cor1"></label>
+              <label>Detalhes<input type="color" name="cor2"></label>
+            </div>
+            <label>Padrão<select name="padrao" id="padrao"></select></label>
+          </div>
+        </details>
+      </div>
+
+      <div class="adm-form__rodape">
+        <p class="erro" id="editor-erro"></p>
+        <button type="button" class="btn btn--fantasma" id="cancelar">Cancelar</button>
+        <button class="btn btn--primario" id="salvar">Salvar camisa</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="aviso" id="aviso" role="status" aria-live="polite"></div>
+
+  <script src="produtos.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
