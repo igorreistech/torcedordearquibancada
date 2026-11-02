@@ -6,7 +6,7 @@ const LOJA = {
   nome: 'Torcedor de Arquibancada',
   whatsapp: '5567996333431',              // DDI + DDD + número, só dígitos
   instagram: 'torcedor_de_arquibancada67', // sem o @
-  precoPersonalizacao: 25,                // nome + número
+  precoPersonalizacao: 50,                // nome + número (padrão; cada camisa pode ter o seu no painel)
   // Cidade de onde as camisas são enviadas (origem do cálculo de frete no Melhor Envio).
   // faixaEstado: CEPs do estado de origem (para o frete grátis só dentro do estado).
   origem: { cep: '79910-134', cidade: 'Antônio João', uf: 'MS', faixaEstado: ['79000-000', '79999-999'] },
@@ -98,6 +98,10 @@ const tamanhosDe = (p) => (p.estoque ? p.estoque.map((e) => e.tamanho) : LOJA.ta
 const disponivel = (p, tamanho) => (p.estoque ? Math.max(0, p.estoque.find((e) => e.tamanho === tamanho)?.qtd || 0) : Infinity);
 const esgotado = (p) => Boolean(p.estoque) && p.estoque.every((e) => !(e.qtd > 0));
 
+// Preço da personalização de uma camisa: o do cadastro, ou o padrão da loja.
+const precoPersonalizacaoDe = (p) => p.precoPersonalizacao ?? LOJA.precoPersonalizacao;
+const aceitaPersonalizacao = (p) => p.personalizavel !== false;
+
 // Confere se há estoque para o carrinho todo, somando as linhas do mesmo tamanho.
 function conferirEstoque(itens, produtos) {
   const soma = {};
@@ -141,7 +145,8 @@ function calcularPedido(itens, produtos, entrega) {
     if (!Number.isInteger(qtd) || qtd < 1 || qtd > 20) throw new Error('Quantidade inválida.');
     const nome = String(i.nome || '').trim().toUpperCase().slice(0, 12);
     const numero = String(i.numero || '').replace(/\D/g, '').slice(0, 2);
-    const unitario = p.preco + (nome || numero ? LOJA.precoPersonalizacao : 0);
+    if ((nome || numero) && !aceitaPersonalizacao(p)) throw new Error(`${p.nome} não aceita personalização.`);
+    const unitario = p.preco + (nome || numero ? precoPersonalizacaoDe(p) : 0);
     return { produto: p, tamanho: i.tamanho, nome, numero, qtd, unitario, total: arredondar(unitario * qtd) };
   });
   const qtd = linhas.reduce((s, l) => s + l.qtd, 0);
@@ -236,16 +241,19 @@ function validarProduto(p = {}) {
     fotos: (Array.isArray(p.fotos) ? p.fotos : []).filter((u) => /^https:\/\/\S+$/.test(u)).slice(0, 8),
     estoque: lerEstoque(p.estoque),
     ativo: p.ativo !== false,
+    personalizavel: p.personalizavel !== false,
+    precoPersonalizacao: p.precoPersonalizacao === '' || p.precoPersonalizacao == null ? null : arredondar(Number(p.precoPersonalizacao)),
   };
   const quem = r.nome ? `"${r.nome}": ` : '';
   if (!r.id) throw new Error('Camisa sem identificador.');
   if (!r.nome) throw new Error('Informe o nome da camisa.');
   if (!CATEGORIAS.some((x) => x.id === r.categoria)) throw new Error(quem + 'escolha uma categoria.');
   if (!Number.isFinite(r.preco) || r.preco <= 0) throw new Error(quem + 'preço inválido.');
+  if (r.precoPersonalizacao !== null && !(r.precoPersonalizacao >= 0 && r.precoPersonalizacao <= 500)) throw new Error(quem + 'preço da personalização inválido.');
   if (r.precoAntigo !== null && !(r.precoAntigo > r.preco)) throw new Error(quem + 'o preço "de" precisa ser maior que o preço atual.');
   return r;
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { LOJA, CATEGORIAS, PADROES, TAGS, FRETE_PADRAO, PRODUTOS_PADRAO, validarFrete, qtdParaFreteGratis, cepNoEstado, tamanhosDe, calcularPedido, conferirEstoque, baixarEstoque, validarCliente, validarProduto };
+  module.exports = { LOJA, CATEGORIAS, PADROES, TAGS, FRETE_PADRAO, PRODUTOS_PADRAO, precoPersonalizacaoDe, validarFrete, qtdParaFreteGratis, cepNoEstado, tamanhosDe, calcularPedido, conferirEstoque, baixarEstoque, validarCliente, validarProduto };
 }

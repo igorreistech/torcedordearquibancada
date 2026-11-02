@@ -202,6 +202,13 @@
     if (e.key === 'Enter') { e.preventDefault(); adicionarVersao(); }
   });
 
+  // Personalização: em branco usa o padrão da loja (LOJA.precoPersonalizacao)
+  function atualizarPersonalizacao() {
+    $('#campo-personalizacao').hidden = !form.personalizavel.checked;
+    form.precoPersonalizacao.placeholder = `Em branco = padrão: ${brl(LOJA.precoPersonalizacao)}`;
+  }
+  form.personalizavel.addEventListener('change', atualizarPersonalizacao);
+
   function abrirEditor(i) {
     editando = i;
     const p = produtos[i] || { categoria: CATEGORIAS[0].id, versao: 'Torcedor', cores: ['#ffffff', '#111111', '#111111'], padrao: 'solido', tags: [], fotos: [], ativo: true };
@@ -214,6 +221,9 @@
     form.preco.value = paraTexto(p.preco);
     form.precoAntigo.value = paraTexto(p.precoAntigo);
     form.ativo.checked = p.ativo !== false;
+    form.personalizavel.checked = p.personalizavel !== false;
+    form.precoPersonalizacao.value = paraTexto(p.precoPersonalizacao ?? null);
+    atualizarPersonalizacao();
     form.querySelectorAll('[name=tag]').forEach((c) => { c.checked = p.tags.includes(c.value); });
     p.cores.forEach((cor, n) => { form[`cor${n}`].value = cor; });
     form.padrao.value = p.padrao;
@@ -310,6 +320,8 @@
       padrao: form.padrao.value,
       fotos,
       ativo: form.ativo.checked,
+      personalizavel: form.personalizavel.checked,
+      precoPersonalizacao: form.precoPersonalizacao.value.trim() ? paraNumero(form.precoPersonalizacao.value) : null,
       estoque: form.encomenda.checked ? null : lerLinhasEstoque(),
     };
     if (!form.encomenda.checked) {

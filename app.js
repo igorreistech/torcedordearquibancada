@@ -141,7 +141,7 @@
         <div class="tamanhos">${tamanhosDe(p).map((t) => `<button type="button" data-tam="${t}" ${disponivel(p, t) ? '' : 'disabled'}>${t}${p.estoque ? `<small>${disponivel(p, t) ? `${disponivel(p, t)} un.` : 'esgotado'}</small>` : ''}</button>`).join('')}</div>
         <p class="estoque-aviso" id="m-estoque">${p.estoque ? '' : 'Sob encomenda'}</p>
 
-        <label class="check"><input type="checkbox" id="m-personalizar"> Personalizar com nome e número <b>+ ${brl(LOJA.precoPersonalizacao)}</b></label>
+        ${aceitaPersonalizacao(p) ? `<label class="check"><input type="checkbox" id="m-personalizar"> Personalizar com nome e número <b>${precoPersonalizacaoDe(p) ? `+ ${brl(precoPersonalizacaoDe(p))}` : 'grátis'}</b></label>` : ''}
         <div class="personalizacao" id="m-campos" hidden>
           <input type="text" id="m-nome" maxlength="12" placeholder="NOME" aria-label="Nome na camisa">
           <input type="text" id="m-numero" maxlength="2" inputmode="numeric" placeholder="Nº" aria-label="Número na camisa">
@@ -164,7 +164,7 @@
     disponivel(p, tamanho) - carrinho.filter((i) => i.id === p.id && i.tamanho === tamanho).reduce((s, i) => s + i.qtd, 0);
   const limiteQtd = () => Math.min(20, sel.tamanho ? Math.max(1, restante(sel.p, sel.tamanho)) : 20);
 
-  const precoUnit = (p, personalizado) => p.preco + (personalizado ? LOJA.precoPersonalizacao : 0);
+  const precoUnit = (p, personalizado) => p.preco + (personalizado ? precoPersonalizacaoDe(p) : 0);
 
   function atualizarTotalModal() {
     $('#m-qtd').textContent = sel.qtd;

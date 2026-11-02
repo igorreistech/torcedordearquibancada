@@ -91,3 +91,5 @@
   .adm-form .duas { grid-template-columns: 1fr; }
   .adm-frete-medidas { grid-template-columns: 1fr 1fr; }
 }
+
+#campo-personalizacao[hidden] { display: none; }
