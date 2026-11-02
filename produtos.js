@@ -8,7 +8,8 @@ const LOJA = {
   instagram: 'torcedor_de_arquibancada67', // sem o @
   precoPersonalizacao: 25,                // nome + número
   // Cidade de onde as camisas são enviadas (origem do cálculo de frete no Melhor Envio).
-  origem: { cep: '79910-134', cidade: 'Antônio João', uf: 'MS' },
+  // faixaEstado: CEPs do estado de origem (para o frete grátis só dentro do estado).
+  origem: { cep: '79910-134', cidade: 'Antônio João', uf: 'MS', faixaEstado: ['79000-000', '79999-999'] },
   maxParcelas: 12,                        // parcelas no cartão (texto do site)
   tamanhos: ['P', 'M', 'G', 'GG', '2XL', '3XL'],      // tamanhos das camisas sob encomenda
   // InfiniteTag da conta InfinitePay, sem o $ (aparece no canto superior do app).
@@ -40,7 +41,26 @@ const TAGS = [
 
 // Frete calculado pelo Melhor Envio (Correios PAC e SEDEX), saindo de LOJA.origem.
 // Peso e medidas da embalagem de UMA camisa, acréscimo e frete grátis são ajustados no painel (botão Frete).
-const FRETE_PADRAO = { gratisAPartirDe: 0, acrescimo: 0, peso: 350, largura: 25, altura: 4, comprimento: 30 };
+const FRETE_PADRAO = {
+  gratisAPartirDe: 0, gratisSoNoEstado: true, gratisSemPromocao: true,
+  acrescimo: 0, peso: 350, largura: 25, altura: 4, comprimento: 30,
+};
+
+// Quantas camisas contam para o frete grátis (as de promoção podem não contar).
+function qtdParaFreteGratis(itens, produtos, config) {
+  return itens.reduce((s, i) => {
+    const p = produtos.find((x) => x.id === i.id);
+    const promocao = p?.tags?.includes('promocao');
+    return s + (config.gratisSemPromocao && promocao ? 0 : Number(i.qtd) || 0);
+  }, 0);
+}
+
+// O CEP é do estado de origem?
+function cepNoEstado(cep) {
+  const n = Number(String(cep || '').replace(/[^0-9]/g, '').slice(0, 5));
+  const [de, ate] = LOJA.origem.faixaEstado.map((c) => Number(c.replace(/[^0-9]/g, '').slice(0, 5)));
+  return n >= de && n <= ate;
+}
 
 // ============================================================
 //  CATÁLOGO INICIAL — usado só até o primeiro salvamento no painel
@@ -154,6 +174,8 @@ function validarFrete(c = {}) {
   if (!Number.isFinite(acrescimo) || acrescimo < 0 || acrescimo > 100) throw new Error('Acréscimo no frete: informe um valor entre 0 e 100.');
   return {
     gratisAPartirDe: inteiro(c.gratisAPartirDe || 0, 0, 99, 'Frete grátis'),
+    gratisSoNoEstado: c.gratisSoNoEstado !== false,
+    gratisSemPromocao: c.gratisSemPromocao !== false,
     acrescimo: arredondar(acrescimo),
     peso: inteiro(c.peso ?? FRETE_PADRAO.peso, 50, 30000, 'Peso por camisa (g)'),
     largura: inteiro(c.largura ?? FRETE_PADRAO.largura, 1, 100, 'Largura (cm)'),
@@ -225,5 +247,5 @@ function validarProduto(p = {}) {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { LOJA, CATEGORIAS, PADROES, TAGS, FRETE_PADRAO, PRODUTOS_PADRAO, validarFrete, tamanhosDe, calcularPedido, conferirEstoque, baixarEstoque, validarCliente, validarProduto };
+  module.exports = { LOJA, CATEGORIAS, PADROES, TAGS, FRETE_PADRAO, PRODUTOS_PADRAO, validarFrete, qtdParaFreteGratis, cepNoEstado, tamanhosDe, calcularPedido, conferirEstoque, baixarEstoque, validarCliente, validarProduto };
 }

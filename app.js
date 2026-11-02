@@ -293,12 +293,17 @@
       pedido = pedidoAtual();
     }
     $('#resumo-carrinho').innerHTML = resumoHTML(pedido);
+    // Aviso do frete grátis, com as regras do painel (só no estado, sem camisas de promoção)
     const minimo = tabelaFrete.gratisAPartirDe;
-    const falta = minimo - qtd;
+    const falta = minimo - qtdGratis();
+    const onde = tabelaFrete.gratisSoNoEstado ? ` para ${LOJA.origem.uf}` : '';
+    const fora = tabelaFrete.gratisSemPromocao ? ' (fora da promoção)' : '';
+    const cepFora = tabelaFrete.gratisSoNoEstado && cepSimulado().length === 8 && !cepNoEstado(cepSimulado());
     $('#frete').hidden = !minimo;
-    $('#frete').innerHTML = !minimo ? '' : falta <= 0
-      ? '✅ <b>Frete PAC grátis</b> neste pedido!'
-      : `Falta${falta > 1 ? 'm' : ''} <b>${falta} camisa${falta > 1 ? 's' : ''}</b> para o frete PAC grátis.`;
+    $('#frete').innerHTML = !minimo ? ''
+      : cepFora ? `Frete PAC grátis só vale para entregas em ${LOJA.origem.uf}.`
+      : falta <= 0 ? `✅ <b>Frete PAC grátis</b>${onde} neste pedido!`
+      : `Falta${falta > 1 ? 'm' : ''} <b>${falta} camisa${falta > 1 ? 's' : ''}</b>${fora} para o frete PAC grátis${onde}.`;
   }
 
   $('#itens').addEventListener('click', (e) => {
@@ -381,7 +386,8 @@
 
   // Cotações guardadas por CEP + quantidade, para não consultar de novo a cada clique.
   const cotacoes = {};
-  const chaveCotacao = (cep) => `${cep}|${qtdCarrinho()}`;
+  const qtdGratis = () => qtdParaFreteGratis(carrinho, produtos, tabelaFrete);
+  const chaveCotacao = (cep) => `${cep}|${qtdCarrinho()}|${qtdGratis()}`;
   const opcoesDe = (cep) => cotacoes[chaveCotacao(cep)]?.opcoes; // undefined enquanto calcula
   const entregaPara = (cep) => (cep.length === 8 && opcoesDe(cep) ? { opcoes: opcoesDe(cep), modalidade } : null);
 
@@ -389,7 +395,7 @@
     const chave = chaveCotacao(cep);
     if (cotacoes[chave]) return;
     cotacoes[chave] = { carregando: true };
-    fetch('/api/frete?' + new URLSearchParams({ cep, qtd: qtdCarrinho() }))
+    fetch('/api/frete?' + new URLSearchParams({ cep, qtd: qtdCarrinho(), gratis: qtdGratis() }))
       .then((r) => (r.ok ? r.json() : {}))
       .catch(() => ({}))
       .then((d) => {

@@ -312,6 +312,8 @@
       for (const campo of ['peso', 'largura', 'altura', 'comprimento']) formFrete[campo].value = frete[campo];
       formFrete.acrescimo.value = frete.acrescimo ? paraTexto(frete.acrescimo) : '';
       formFrete.gratis.value = frete.gratisAPartirDe || 0;
+      formFrete.soNoEstado.checked = frete.gratisSoNoEstado !== false;
+      formFrete.semPromocao.checked = frete.gratisSemPromocao !== false;
       $('#frete-erro').textContent = '';
       dlgFrete.showModal();
     } catch (e) {
@@ -325,6 +327,8 @@
     const campo = (nome) => formFrete[nome].value.trim();
     const dados = {
       gratisAPartirDe: campo('gratis'),
+      gratisSoNoEstado: formFrete.soNoEstado.checked,
+      gratisSemPromocao: formFrete.semPromocao.checked,
       acrescimo: campo('acrescimo').replace(/^R\$\s*/, ''),
       peso: campo('peso'),
       largura: campo('largura'),
