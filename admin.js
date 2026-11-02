@@ -9,6 +9,7 @@
   try { senha = sessionStorage.getItem(CHAVE_SENHA) || ''; } catch {}
   let produtos = [];
   let busca = '';
+  let loja = CONFIG_LOJA_PADRAO; // categorias e tabela de preços
 
   // ---------- API ----------
   async function api(metodo, caminho, corpo) {
@@ -34,6 +35,9 @@
   async function entrar() {
     try {
       produtos = (await api('GET', '/api/admin/produtos')).produtos;
+      loja = (await api('GET', '/api/admin/loja')).loja;
+      renderCategoriasSelect();
+      renderTabelaChips();
       try { sessionStorage.setItem(CHAVE_SENHA, senha); } catch {}
       $('#login').hidden = true;
       $('#painel').hidden = false;
@@ -62,7 +66,7 @@
   $('#sair').addEventListener('click', sair);
 
   // ---------- Lista ----------
-  const categoria = (id) => CATEGORIAS.find((c) => c.id === id)?.nome || '—';
+  const categoria = (id) => loja.categorias.find((c) => c.id === id)?.nome || '—';
   const capa = (p) =>
     p.fotos?.length
       ? `<img src="${esc(p.fotos[0])}" alt="">`
@@ -132,7 +136,6 @@
   let fotos = [];
   let enviando = 0;
 
-  $('#categoria').innerHTML = CATEGORIAS.map((c) => `<option value="${c.id}">${c.nome}</option>`).join('');
   $('#padrao').innerHTML = PADROES.map((p) => `<option value="${p.id}">${p.nome}</option>`).join('');
   // Linhas "Tamanho | Quantidade" do estoque
   const linhaEstoque = (tamanho = '', qtd = '') => `<div class="adm-estoque__linha">
@@ -209,23 +212,30 @@
   }
   form.personalizavel.addEventListener('change', atualizarPersonalizacao);
 
-  // Atalhos da tabela de preços da loja (TABELA_PRECOS em produtos.js)
-  $('#tabela-precos').innerHTML = '<p class="ajuda">Tabela de preços (clique para preencher):</p>' + TABELA_PRECOS
-    .map((t, n) => `<button type="button" class="adm-chip" data-tabela="${n}">${esc(t.nome)} · <b>${t.preco ? brl(t.preco) : `${brl(t.precoDe)} a ${brl(t.precoAte)}`}</b></button>`)
-    .join('');
+  // Atalhos da tabela de preços (cadastrada no botão "Tabela e categorias")
+  const GRADES = { infantil: ['2', '4', '6', '8', '10', '12', '14', '16'], feminina: ['P', 'M', 'G', 'GG'] };
+
+  function renderTabelaChips() {
+    $('#tabela-precos').innerHTML = loja.tabelaPrecos.length
+      ? '<p class="ajuda">Tabela de preços (clique para preencher):</p>' + loja.tabelaPrecos
+        .map((t, n) => `<button type="button" class="adm-chip" data-tabela="${n}">${esc(t.nome)} · <b>${precoTabela(t)}</b>${t.precoPersonalizada ? ` · personalizada <b>${brl(t.precoPersonalizada)}</b>` : ''}</button>`)
+        .join('')
+      : '';
+  }
 
   $('#tabela-precos').addEventListener('click', (e) => {
     const b = e.target.closest('[data-tabela]');
     if (!b) return;
-    const t = TABELA_PRECOS[b.dataset.tabela];
+    const t = loja.tabelaPrecos[b.dataset.tabela];
     document.querySelectorAll('[data-tabela]').forEach((x) => x.classList.toggle('ativo', x === b));
     if (t.versao) renderVersoes(t.versao);
     if (t.temporada) form.temporada.value = t.temporada;
-    if (t.categoria) form.categoria.value = t.categoria;
+    if (t.categoria && loja.categorias.some((c) => c.id === t.categoria)) form.categoria.value = t.categoria;
     if (t.promocao) form.querySelector('[name=tag][value=promocao]').checked = true;
-    // Grade sugerida só substitui o estoque se nenhuma quantidade foi preenchida ainda
-    if (t.grade && !form.encomenda.checked && lerLinhasEstoque().every((x) => x.qtd === '')) {
-      preencherEstoque(t.grade.map((tamanho) => ({ tamanho, qtd: '' })));
+    // Grade de tamanhos pela versão, só se nenhuma quantidade foi preenchida ainda
+    const grade = GRADES[normalizar(t.versao || '')];
+    if (grade && !form.encomenda.checked && lerLinhasEstoque().every((x) => x.qtd === '')) {
+      preencherEstoque(grade.map((tamanho) => ({ tamanho, qtd: '' })));
     }
     if (t.preco) {
       form.preco.value = paraTexto(t.preco);
@@ -235,11 +245,17 @@
       form.preco.placeholder = `De ${paraTexto(t.precoDe)} a ${paraTexto(t.precoAte)}`;
       form.preco.focus();
     }
+    // "Personalizada R$ 220" com preço R$ 170 → personalização de R$ 50 nesta camisa
+    if (t.precoPersonalizada && t.preco) {
+      form.personalizavel.checked = true;
+      form.precoPersonalizacao.value = paraTexto(t.precoPersonalizada - t.preco);
+      atualizarPersonalizacao();
+    }
   });
 
   function abrirEditor(i) {
     editando = i;
-    const p = produtos[i] || { categoria: CATEGORIAS[0].id, versao: 'Torcedor', cores: ['#ffffff', '#111111', '#111111'], padrao: 'solido', tags: [], fotos: [], ativo: true };
+    const p = produtos[i] || { categoria: loja.categorias[0].id, versao: 'Torcedor', cores: ['#ffffff', '#111111', '#111111'], padrao: 'solido', tags: [], fotos: [], ativo: true };
     $('#editor-titulo').textContent = i < 0 ? 'Nova camisa' : 'Editar camisa';
     form.reset();
     form.nome.value = p.nome || '';
@@ -361,7 +377,7 @@
       if (new Set(linhas.map((x) => x.tamanho)).size !== linhas.length) return ($('#editor-erro').textContent = 'Há tamanhos repetidos.');
     }
     let produto;
-    try { produto = validarProduto(dados); } catch (err) { return ($('#editor-erro').textContent = err.message); }
+    try { produto = validarProduto(dados, loja.categorias); } catch (err) { return ($('#editor-erro').textContent = err.message); }
 
     const nova = [...produtos];
     if (editando < 0) nova.unshift(produto);
@@ -380,6 +396,101 @@
   $('#nova').addEventListener('click', () => abrirEditor(-1));
   $('#fechar-editor').addEventListener('click', () => editor.close());
   $('#cancelar').addEventListener('click', () => editor.close());
+
+  // ---------- Tabela de preços e categorias ----------
+  const dlgLoja = $('#dlg-loja');
+  const formLoja = $('#form-loja');
+  const precoTabela = (t) => (t.preco ? brl(t.preco) : `${brl(t.precoDe)} a ${brl(t.precoAte)}`);
+
+  function renderCategoriasSelect() {
+    const atual = form.categoria.value;
+    $('#categoria').innerHTML = loja.categorias.map((c) => `<option value="${esc(c.id)}">${esc(c.nome)}</option>`).join('');
+    if (loja.categorias.some((c) => c.id === atual)) form.categoria.value = atual;
+  }
+
+  const linhaCategoria = (c = {}) => `<div class="adm-linha-cat" data-id="${esc(c.id || '')}">
+      <input data-c="nome" value="${esc(c.nome || '')}" placeholder="Nome da categoria" maxlength="30" aria-label="Nome da categoria">
+      <button type="button" class="adm-estoque__tirar" data-tirar aria-label="Remover">×</button>
+    </div>`;
+
+  // Categorias como estão na janela (as novas ganham o id pelo nome)
+  const categoriasDaJanela = () => [...document.querySelectorAll('.adm-linha-cat')]
+    .map((l) => ({ id: l.dataset.id || slug(l.querySelector('[data-c=nome]').value), nome: l.querySelector('[data-c=nome]').value.trim() }))
+    .filter((c) => c.nome);
+
+  const opcoesCategoria = (atual) => '<option value="">Qualquer categoria</option>' + categoriasDaJanela()
+    .map((c) => `<option value="${esc(c.id)}" ${c.id === atual ? 'selected' : ''}>${esc(c.nome)}</option>`).join('');
+
+  const linhaTabela = (t = {}) => `<div class="adm-linha-tab">
+      <input data-c="nome" value="${esc(t.nome || '')}" placeholder="Nome (ex.: Temporada 26/27 · Torcedor)" maxlength="40" aria-label="Nome">
+      <label>Preço<input data-c="preco" value="${esc(t.preco ? paraTexto(t.preco) : t.precoDe ? `${paraTexto(t.precoDe)} a ${paraTexto(t.precoAte)}` : '')}" placeholder="145 ou 90 a 140"></label>
+      <label>Personalizada<input data-c="precoPersonalizada" value="${esc(paraTexto(t.precoPersonalizada ?? null))}" placeholder="opcional" inputmode="decimal"></label>
+      <label>Versão<input data-c="versao" value="${esc(t.versao || '')}" placeholder="opcional" maxlength="20"></label>
+      <label>Temporada<input data-c="temporada" value="${esc(t.temporada || '')}" placeholder="opcional" maxlength="12"></label>
+      <label>Categoria<select data-c="categoria">${opcoesCategoria(t.categoria)}</select></label>
+      <label class="check"><input type="checkbox" data-c="promocao" ${t.promocao ? 'checked' : ''}> Promoção</label>
+      <button type="button" class="adm-estoque__tirar" data-tirar aria-label="Remover">×</button>
+    </div>`;
+
+  function atualizarSelectsCategoria() {
+    document.querySelectorAll('.adm-linha-tab [data-c=categoria]').forEach((s) => {
+      const atual = s.value;
+      s.innerHTML = opcoesCategoria(atual);
+    });
+  }
+
+  $('#abrir-loja').addEventListener('click', () => {
+    $('#lista-categorias').innerHTML = loja.categorias.map(linhaCategoria).join('');
+    $('#lista-tabela').innerHTML = loja.tabelaPrecos.map(linhaTabela).join('');
+    $('#loja-erro').textContent = '';
+    dlgLoja.showModal();
+  });
+  document.querySelectorAll('[data-fechar-loja]').forEach((b) => b.addEventListener('click', () => dlgLoja.close()));
+  $('#mais-categoria').addEventListener('click', () => {
+    $('#lista-categorias').insertAdjacentHTML('beforeend', linhaCategoria());
+    $('#lista-categorias').lastElementChild.querySelector('input').focus();
+  });
+  $('#mais-tabela').addEventListener('click', () => {
+    $('#lista-tabela').insertAdjacentHTML('beforeend', linhaTabela());
+    $('#lista-tabela').lastElementChild.querySelector('input').focus();
+  });
+  formLoja.addEventListener('click', (e) => {
+    const x = e.target.closest('[data-tirar]');
+    if (!x) return;
+    x.parentElement.remove();
+    atualizarSelectsCategoria();
+  });
+  $('#lista-categorias').addEventListener('change', atualizarSelectsCategoria);
+
+  formLoja.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const valor = (l, c) => l.querySelector(`[data-c=${c}]`).value.trim();
+    const tabelaPrecos = [...document.querySelectorAll('.adm-linha-tab')].map((l) => {
+      const preco = valor(l, 'preco');
+      const faixa = preco.match(/^([\d.,]+)\s*(?:a|-|até)\s*([\d.,]+)$/i);
+      return {
+        nome: valor(l, 'nome'),
+        ...(faixa ? { precoDe: paraNumero(faixa[1]), precoAte: paraNumero(faixa[2]) } : { preco: preco ? paraNumero(preco) : null }),
+        precoPersonalizada: valor(l, 'precoPersonalizada') ? paraNumero(valor(l, 'precoPersonalizada')) : null,
+        versao: valor(l, 'versao'),
+        temporada: valor(l, 'temporada'),
+        categoria: l.querySelector('[data-c=categoria]').value,
+        promocao: l.querySelector('[data-c=promocao]').checked,
+      };
+    });
+    const dados = { categorias: categoriasDaJanela(), tabelaPrecos };
+    try { validarLoja(dados); } catch (err) { return ($('#loja-erro').textContent = err.message); }
+    try {
+      loja = (await api('PUT', '/api/admin/loja', { loja: dados })).loja;
+      renderCategoriasSelect();
+      renderTabelaChips();
+      renderLista();
+      dlgLoja.close();
+      aviso('Salvo ✓ — o site atualiza em até 1 minuto');
+    } catch (err) {
+      $('#loja-erro').textContent = err.message;
+    }
+  });
 
   // ---------- Frete ----------
   const dlgFrete = $('#dlg-frete');

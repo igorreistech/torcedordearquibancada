@@ -7,6 +7,7 @@
 
   let produtos = [];
   let tabelaFrete = FRETE_PADRAO;
+  let categorias = CATEGORIAS;
   const produto = (id) => produtos.find((p) => p.id === id);
 
   // ---------- Camisa ilustrada (usada quando o produto não tem foto) ----------
@@ -62,6 +63,16 @@
   // ---------- Catálogo ----------
   const filtro = { categoria: 'todas', busca: '', ordem: 'destaque' };
 
+  async function carregarCategorias() {
+    if (location.protocol === 'file:') return CATEGORIAS;
+    try {
+      const r = await fetch('/api/loja');
+      return r.ok ? (await r.json()).categorias : CATEGORIAS;
+    } catch {
+      return CATEGORIAS;
+    }
+  }
+
   async function carregarFrete() {
     if (location.protocol === 'file:') return FRETE_PADRAO;
     try {
@@ -81,7 +92,7 @@
   }
 
   function renderChips() {
-    const todas = [{ id: 'todas', nome: 'Todas' }, ...CATEGORIAS];
+    const todas = [{ id: 'todas', nome: 'Todas' }, ...categorias];
     $('#chips').innerHTML = todas
       .map((c) => `<button class="chip${c.id === filtro.categoria ? ' ativo' : ''}" data-cat="${c.id}" role="tab" aria-selected="${c.id === filtro.categoria}">${c.nome}</button>`)
       .join('');
@@ -133,7 +144,7 @@
         ${fotos.length > 1 ? `<div class="miniaturas">${fotos.map((u, i) => `<button type="button" data-foto="${i}" class="${i ? '' : 'ativo'}">${foto(u, p)}</button>`).join('')}</div>` : ''}
       </div>
       <div class="modal__info">
-        <p class="card__versao">${esc(CATEGORIAS.find((c) => c.id === p.categoria)?.nome || '')} · Versão ${esc(p.versao)}</p>
+        <p class="card__versao">${esc(categorias.find((c) => c.id === p.categoria)?.nome || '')} · Versão ${esc(p.versao)}</p>
         <h2>${esc(p.nome)} <span>${esc(p.temporada)}</span></h2>
         <p class="preco">${p.precoAntigo ? `<s>${brl(p.precoAntigo)}</s>` : ''}<strong>${brl(p.preco)}</strong></p>
 
@@ -622,10 +633,12 @@
   $('#ano').textContent = new Date().getFullYear();
   renderChips();
 
-  Promise.all([carregarProdutos(), carregarFrete()])
-    .then(([lista, frete]) => {
+  Promise.all([carregarProdutos(), carregarFrete(), carregarCategorias()])
+    .then(([lista, frete, cats]) => {
       produtos = lista;
       tabelaFrete = frete;
+      categorias = cats;
+      renderChips();
       // Descarta do carrinho salvo o que saiu do catálogo
       carrinho = carrinho.filter((i) => produto(i.id) && tamanhosDe(produto(i.id)).includes(i.tamanho));
       const destaque = produtos.slice(0, 2);

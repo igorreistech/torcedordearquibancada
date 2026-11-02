@@ -97,3 +97,23 @@
 }
 
 #campo-personalizacao[hidden] { display: none; }
+
+/* Tabela de preços e categorias */
+.adm-editor--largo { width: min(860px, calc(100% - 24px)); }
+.adm-lista-loja { display: grid; gap: 8px; }
+.adm-linha-cat { display: grid; grid-template-columns: 1fr 38px; gap: 8px; }
+.adm-linha-tab {
+  display: grid; grid-template-columns: repeat(5, 1fr) auto; gap: 8px; align-items: end;
+  padding: 10px; border: 1px solid var(--linha); border-radius: 12px; background: var(--grafite);
+}
+.adm-linha-tab > [data-c=nome] { grid-column: 1 / -2; font-weight: 600; }
+.adm-linha-tab > [data-tirar] { grid-column: -2 / -1; grid-row: 1; height: 42px; }
+.adm-linha-tab label { font-size: 11px; }
+.adm-linha-tab input, .adm-linha-tab select { padding: 8px; font-size: 14px; }
+.adm-linha-tab .check { grid-column: 1 / -1; font-size: 13px; display: flex; align-items: center; gap: 8px; color: var(--texto); }
+.adm-mais { justify-self: start; padding: 9px 14px; font-size: 13px; margin-top: 4px; }
+@media (max-width: 640px) {
+  .adm-linha-tab { grid-template-columns: 1fr 1fr; }
+  .adm-linha-tab > [data-c=nome] { grid-column: 1 / -1; }
+  .adm-linha-tab > [data-tirar] { grid-column: auto; grid-row: auto; }
+}

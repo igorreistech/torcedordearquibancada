@@ -62,17 +62,20 @@ function cepNoEstado(cep) {
   return n >= de && n <= ate;
 }
 
-// Tabela de preços da loja: atalhos no cadastro de camisa do painel.
-// preco: valor fixo. precoDe/precoAte: faixa (o dono digita o valor). grade: tamanhos sugeridos.
+// Tabela de preços da loja: atalhos no cadastro de camisa do painel (editável no botão "Tabela e categorias").
+// preco: valor fixo. precoDe/precoAte: faixa (o dono digita o valor). precoPersonalizada: total com nome e número.
 const TABELA_PRECOS = [
   { nome: 'Temporada 26/27 · Torcedor', preco: 145, versao: 'Torcedor', temporada: '26/27' },
   { nome: 'Temporada 26/27 · Jogador', preco: 175, versao: 'Jogador', temporada: '26/27' },
   { nome: 'Temporada 25/26', preco: 120, temporada: '25/26' },
   { nome: 'Kit Regata', preco: 135, versao: 'Kit Regata' },
-  { nome: 'Kit Infantil', precoDe: 90, precoAte: 140, versao: 'Infantil', grade: ['2', '4', '6', '8', '10', '12', '14', '16'] },
-  { nome: 'Feminina promocional', preco: 90, versao: 'Feminina', promocao: true, grade: ['P', 'M', 'G', 'GG'] },
-  { nome: 'Retrô', preco: 170, versao: 'Retrô', categoria: 'retro' },
+  { nome: 'Kit Infantil', precoDe: 90, precoAte: 140, versao: 'Infantil' },
+  { nome: 'Feminina promocional', preco: 90, versao: 'Feminina', promocao: true },
+  { nome: 'Retrô', preco: 170, precoPersonalizada: 220, versao: 'Retrô', categoria: 'retro' },
 ];
+
+// Categorias e tabela de preços padrão, usadas até o dono salvar as suas no painel.
+const CONFIG_LOJA_PADRAO = { categorias: CATEGORIAS, tabelaPrecos: TABELA_PRECOS };
 
 // ============================================================
 //  CATÁLOGO INICIAL — usado só até o primeiro salvamento no painel
@@ -234,8 +237,59 @@ function lerEstoque(estoque) {
   return r.length ? r.slice(0, 20) : null;
 }
 
+// Identificador a partir de um nome ("Seleções" → "selecoes")
+const slugify = (t) => String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
+
+// Valida as categorias e a tabela de preços vindas do painel. Lança Error com mensagem para o dono.
+function validarLoja(c = {}) {
+  const txt = (v, max) => String(v ?? '').trim().slice(0, max);
+  const num = (v) => (v === '' || v == null ? null : Number(String(v).replace(',', '.')));
+
+  const categorias = [];
+  for (const k of Array.isArray(c.categorias) ? c.categorias : []) {
+    const nome = txt(k?.nome, 30);
+    if (!nome) continue;
+    const id = slugify(txt(k.id, 40) || nome);
+    if (!id) throw new Error(`Nome de categoria inválido: ${nome}.`);
+    if (categorias.some((x) => x.id === id)) throw new Error(`Categoria repetida: ${nome}.`);
+    categorias.push({ id, nome });
+  }
+  if (!categorias.length) throw new Error('Cadastre pelo menos uma categoria.');
+  if (categorias.length > 30) throw new Error('Máximo de 30 categorias.');
+
+  const tabelaPrecos = [];
+  for (const t of (Array.isArray(c.tabelaPrecos) ? c.tabelaPrecos : []).slice(0, 30)) {
+    const nome = txt(t?.nome, 40);
+    if (!nome) continue;
+    const r = {
+      nome,
+      versao: txt(t.versao, 20),
+      temporada: txt(t.temporada, 12),
+      categoria: categorias.some((x) => x.id === t.categoria) ? t.categoria : '',
+      promocao: Boolean(t.promocao),
+    };
+    const preco = num(t.preco), de = num(t.precoDe), ate = num(t.precoAte), personalizada = num(t.precoPersonalizada);
+    if (preco !== null) {
+      if (!(preco > 0)) throw new Error(`"${nome}": preço inválido.`);
+      r.preco = arredondar(preco);
+    } else if (de !== null && ate !== null) {
+      if (!(de > 0 && ate >= de)) throw new Error(`"${nome}": faixa de preço inválida.`);
+      r.precoDe = arredondar(de);
+      r.precoAte = arredondar(ate);
+    } else {
+      throw new Error(`"${nome}": informe o preço (ou uma faixa, como 90 a 140).`);
+    }
+    if (personalizada !== null) {
+      if (!r.preco || !(personalizada >= r.preco)) throw new Error(`"${nome}": o preço personalizada precisa ser maior que o preço.`);
+      r.precoPersonalizada = arredondar(personalizada);
+    }
+    tabelaPrecos.push(r);
+  }
+  return { categorias, tabelaPrecos };
+}
+
 // Valida e normaliza uma camisa vinda do painel. Lança Error com mensagem para o dono.
-function validarProduto(p = {}) {
+function validarProduto(p = {}, categorias = CATEGORIAS) {
   const txt = (v, max) => String(v ?? '').trim().slice(0, max);
   const hex = /^#[0-9a-f]{6}$/i;
   const cores = Array.isArray(p.cores) ? p.cores.slice(0, 3) : [];
@@ -259,7 +313,7 @@ function validarProduto(p = {}) {
   const quem = r.nome ? `"${r.nome}": ` : '';
   if (!r.id) throw new Error('Camisa sem identificador.');
   if (!r.nome) throw new Error('Informe o nome da camisa.');
-  if (!CATEGORIAS.some((x) => x.id === r.categoria)) throw new Error(quem + 'escolha uma categoria.');
+  if (!categorias.some((x) => x.id === r.categoria)) throw new Error(quem + 'escolha uma categoria.');
   if (!Number.isFinite(r.preco) || r.preco <= 0) throw new Error(quem + 'preço inválido.');
   if (r.precoPersonalizacao !== null && !(r.precoPersonalizacao >= 0 && r.precoPersonalizacao <= 500)) throw new Error(quem + 'preço da personalização inválido.');
   if (r.precoAntigo !== null && !(r.precoAntigo > r.preco)) throw new Error(quem + 'o preço "de" precisa ser maior que o preço atual.');
@@ -267,5 +321,5 @@ function validarProduto(p = {}) {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { LOJA, CATEGORIAS, TABELA_PRECOS, PADROES, TAGS, FRETE_PADRAO, PRODUTOS_PADRAO, precoPersonalizacaoDe, validarFrete, qtdParaFreteGratis, cepNoEstado, tamanhosDe, calcularPedido, conferirEstoque, baixarEstoque, validarCliente, validarProduto };
+  module.exports = { LOJA, CATEGORIAS, TABELA_PRECOS, CONFIG_LOJA_PADRAO, validarLoja, PADROES, TAGS, FRETE_PADRAO, PRODUTOS_PADRAO, precoPersonalizacaoDe, validarFrete, qtdParaFreteGratis, cepNoEstado, tamanhosDe, calcularPedido, conferirEstoque, baixarEstoque, validarCliente, validarProduto };
 }

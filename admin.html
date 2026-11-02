@@ -40,6 +40,7 @@
           <p id="contagem"></p>
         </div>
         <div class="adm-botoes">
+          <button class="btn btn--fantasma" id="abrir-loja">📋 Tabela e categorias</button>
           <button class="btn btn--fantasma" id="abrir-frete">🚚 Frete</button>
           <button class="btn btn--primario" id="nova">+ Nova camisa</button>
         </div>
@@ -127,6 +128,35 @@
         <p class="erro" id="editor-erro"></p>
         <button type="button" class="btn btn--fantasma" id="cancelar">Cancelar</button>
         <button class="btn btn--primario" id="salvar">Salvar camisa</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Tabela de preços e categorias -->
+  <dialog class="modal adm-editor adm-editor--largo" id="dlg-loja">
+    <form id="form-loja" class="adm-form" novalidate>
+      <div class="adm-form__topo">
+        <h2>Tabela e categorias</h2>
+        <button type="button" class="modal__fechar" data-fechar-loja aria-label="Fechar">×</button>
+      </div>
+      <div class="adm-form__corpo">
+        <fieldset>
+          <legend>Categorias</legend>
+          <p class="ajuda">Aparecem como filtros no site e na escolha da categoria de cada camisa.</p>
+          <div class="adm-lista-loja" id="lista-categorias"></div>
+          <button type="button" class="btn btn--fantasma adm-mais" id="mais-categoria">+ Adicionar categoria</button>
+        </fieldset>
+        <fieldset>
+          <legend>Tabela de preços</legend>
+          <p class="ajuda">Viram atalhos no cadastro de camisa. Preço pode ser uma faixa, como "90 a 140". "Personalizada" é o total com nome e número (ex.: retrô 170 → 220): o atalho ajusta a personalização da camisa para fechar nesse valor.</p>
+          <div class="adm-lista-loja" id="lista-tabela"></div>
+          <button type="button" class="btn btn--fantasma adm-mais" id="mais-tabela">+ Adicionar preço</button>
+        </fieldset>
+      </div>
+      <div class="adm-form__rodape">
+        <p class="erro" id="loja-erro"></p>
+        <button type="button" class="btn btn--fantasma" data-fechar-loja>Cancelar</button>
+        <button class="btn btn--primario">Salvar</button>
       </div>
     </form>
   </dialog>

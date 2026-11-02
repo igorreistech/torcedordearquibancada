@@ -1,5 +1,5 @@
-const { CATEGORIAS, validarProduto } = require('../../produtos.js');
-const { lerCatalogo, salvarCatalogo, apagarFotos, autorizado } = require('../../lib/catalogo');
+const { validarProduto } = require('../../produtos.js');
+const { lerCatalogo, salvarCatalogo, lerLoja, apagarFotos, autorizado } = require('../../lib/catalogo');
 
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
@@ -12,9 +12,10 @@ module.exports = async (req, res) => {
     if (req.method === 'PUT') {
       const lista = req.body?.produtos;
       if (!Array.isArray(lista) || lista.length > 500) return res.status(400).json({ erro: 'Lista de camisas inválida.' });
+      const { categorias } = await lerLoja({ atualizado: true });
       let produtos;
       try {
-        produtos = lista.map(validarProduto);
+        produtos = lista.map((p) => validarProduto(p, categorias));
       } catch (e) {
         return res.status(400).json({ erro: e.message });
       }
@@ -24,7 +25,7 @@ module.exports = async (req, res) => {
       await salvarCatalogo(produtos);
       const usadas = new Set(produtos.flatMap((p) => p.fotos));
       await apagarFotos(antes.flatMap((p) => p.fotos || []).filter((u) => !usadas.has(u))).catch(console.error);
-      return res.json({ produtos, categorias: CATEGORIAS });
+      return res.json({ produtos });
     }
 
     res.status(405).json({ erro: 'Método não permitido.' });
