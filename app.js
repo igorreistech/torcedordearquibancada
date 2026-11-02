@@ -288,7 +288,7 @@
     renderSimOpcoes();
     let pedido;
     try {
-      pedido = calcularPedido(carrinho, produtos, cepSimulado().length === 8 ? { cep: cepSimulado(), modalidade, frete: tabelaFrete } : null);
+      pedido = calcularPedido(carrinho, produtos, entregaPara(cepSimulado()));
     } catch {
       pedido = pedidoAtual();
     }
@@ -374,15 +374,34 @@
     }
   });
 
-  // Formas de envio (PAC/SEDEX) conforme a região do CEP
+  // Formas de envio (PAC/SEDEX) cotadas no Melhor Envio pelo CEP
   let modalidade = null;
   const cepDigitado = () => form.cep.value.replace(/\D/g, '');
   const qtdCarrinho = () => carrinho.reduce((s, i) => s + i.qtd, 0);
 
+  // Cotações guardadas por CEP + quantidade, para não consultar de novo a cada clique.
+  const cotacoes = {};
+  const chaveCotacao = (cep) => `${cep}|${qtdCarrinho()}`;
+  const opcoesDe = (cep) => cotacoes[chaveCotacao(cep)]?.opcoes; // undefined enquanto calcula
+  const entregaPara = (cep) => (cep.length === 8 && opcoesDe(cep) ? { opcoes: opcoesDe(cep), modalidade } : null);
+
+  function cotar(cep) {
+    const chave = chaveCotacao(cep);
+    if (cotacoes[chave]) return;
+    cotacoes[chave] = { carregando: true };
+    fetch('/api/frete?' + new URLSearchParams({ cep, qtd: qtdCarrinho() }))
+      .then((r) => (r.ok ? r.json() : {}))
+      .catch(() => ({}))
+      .then((d) => {
+        cotacoes[chave] = { opcoes: d.opcoes || [] };
+        renderCarrinho();
+        if (etapa === 'dados') renderOpcoesFrete();
+      });
+  }
+
   function atualizarResumoDados() {
     try {
-      const entrega = cepDigitado().length === 8 ? { cep: cepDigitado(), modalidade, frete: tabelaFrete } : null;
-      $('#dados-resumo').innerHTML = resumoHTML(calcularPedido(carrinho, produtos, entrega));
+      $('#dados-resumo').innerHTML = resumoHTML(calcularPedido(carrinho, produtos, entregaPara(cepDigitado())));
     } catch {}
   }
 
@@ -398,17 +417,21 @@
     atualizarResumoDados();
   }
 
-  // Lista PAC/SEDEX de um CEP. Mantém o envio já escolhido quando ele existe para a região.
+  // Lista PAC/SEDEX de um CEP. Mantém o envio já escolhido quando ele existe para o CEP.
   function opcoesHTML(cep, nome, titulo = '') {
-    const opcoes = opcoesFrete(cep, qtdCarrinho(), tabelaFrete);
+    const opcoes = opcoesDe(cep);
+    if (!opcoes) {
+      cotar(cep);
+      return '<p class="carregando-frete">Calculando frete pelos Correios…</p>';
+    }
     if (!opcoes.some((o) => o.id === modalidade)) modalidade = opcoes[0]?.id || null;
     return opcoes.length
       ? titulo + opcoes.map((o) => `<label class="opcao-frete">
           <input type="radio" name="${nome}" value="${o.id}" ${o.id === modalidade ? 'checked' : ''}>
-          <span><b>${o.nome}</b><small>até ${o.prazo} ${o.prazo > 1 ? 'dias úteis' : 'dia útil'}</small></span>
+          <span><b>${o.nome}</b>${o.prazo ? `<small>até ${o.prazo} ${o.prazo > 1 ? 'dias úteis' : 'dia útil'}</small>` : ''}</span>
           <strong>${o.valor ? brl(o.valor) : 'Grátis'}</strong>
         </label>`).join('')
-      : '<p class="frete">📦 O frete para a sua região é combinado depois pelo WhatsApp e não entra neste pagamento.</p>';
+      : '<p class="frete">📦 Não conseguimos calcular o frete para este CEP agora. Ele será combinado pelo WhatsApp e não entra neste pagamento.</p>';
   }
 
   // ---------- Simulador de frete no carrinho ----------
@@ -448,6 +471,7 @@
     e.preventDefault();
     try {
       cliente = validarCliente(Object.fromEntries(new FormData(form)));
+      if (!opcoesDe(cliente.cep)) return ($('#dados-erro').textContent = 'Aguarde o cálculo do frete.');
       $('#dados-erro').textContent = '';
       pagar();
     } catch (err) {

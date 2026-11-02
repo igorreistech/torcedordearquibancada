@@ -294,6 +294,7 @@ tbody th { text-align: left; color: var(--suave); font-weight: 500; }
 .simular-frete__linha .btn { padding: 10px 16px; font-size: 14px; }
 .simular-frete__ajuda { font-size: 12px; color: var(--laranja); justify-self: start; }
 #sim-opcoes .erro { margin: 0; }
+.carregando-frete { color: var(--suave); font-size: 13px; padding: 8px 0; }
 .opcoes-frete .rotulo { margin: 8px 0 0; }
 .opcao-frete {
   display: grid !important; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px !important;

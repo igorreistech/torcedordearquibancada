@@ -3,7 +3,7 @@
 Loja de camisas: site estático + funções da Vercel (`api/`).
 
 - **Site:** `index.html`, `app.js`, `styles.css`
-- **Painel do dono:** `/admin` (`admin.html`, `admin.js`). Cadastra camisas (fotos, preços, selos, ordem, tamanhos e estoque) e a tabela de frete por região (PAC e SEDEX).
+- **Painel do dono:** `/admin` (`admin.html`, `admin.js`). Cadastra camisas (fotos, preços, selos, ordem, tamanhos e estoque) e a embalagem/regras do frete.
 - **Configuração da loja:** `produtos.js` (WhatsApp, Instagram, InfiniteTag da InfinitePay)
 - **Pagamento:** Checkout Integrado da InfinitePay (Pix ou cartão). O servidor gera o link com o valor recalculado pelo catálogo e confere o pagamento na volta (`payment_check`).
 - **Catálogo e fotos:** Vercel Blob
@@ -15,6 +15,7 @@ Loja de camisas: site estático + funções da Vercel (`api/`).
 3. **Settings → Environment Variables:**
    - `ADMIN_SENHA`: senha do painel
    - `INFINITEPAY_HANDLE`: InfiniteTag da conta, sem o $ (ou preencher `infinitepayHandle` em `produtos.js`)
+   - `MELHORENVIO_TOKEN`: token do Melhor Envio (frete PAC/SEDEX calculado pelo CEP). Opcional: `MELHORENVIO_EMAIL` (contato técnico no User-Agent), `MELHORENVIO_SANDBOX=1` para testar
    - `INFINITEPAY_API_KEY` (opcional): chave da InfinitePay, só se for usar opções avançadas
 4. No app InfinitePay: Vendas → Checkout → Configurações → Habilitar Checkout Integrado.
 5. Fazer um novo deploy depois de mudar variáveis.

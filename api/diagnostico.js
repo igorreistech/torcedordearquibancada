@@ -10,6 +10,7 @@ module.exports = (req, res) => {
       ADMIN_SENHA: tem('ADMIN_SENHA'),
       BLOB_READ_WRITE_TOKEN: tem('BLOB_READ_WRITE_TOKEN'),
       INFINITEPAY_HANDLE: tem('INFINITEPAY_HANDLE'),
+      MELHORENVIO_TOKEN: tem('MELHORENVIO_TOKEN'),
     },
   });
 };

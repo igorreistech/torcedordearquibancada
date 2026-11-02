@@ -1,6 +1,7 @@
 const { calcularPedido, conferirEstoque, validarCliente } = require('../produtos.js');
 const { lerCatalogo, lerFrete, salvarPedido } = require('../lib/catalogo');
 const { handle, cabecalhos } = require('../lib/infinitepay');
+const { cotarFrete } = require('../lib/melhorenvio');
 
 const brl = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const centavos = (v) => Math.round(v * 100);
@@ -15,7 +16,10 @@ module.exports = async (req, res) => {
   try {
     const [produtos, frete] = await Promise.all([lerCatalogo({ atualizado: true }), lerFrete({ atualizado: true })]);
     cliente = validarCliente(req.body?.cliente);
-    pedido = calcularPedido(req.body?.itens, produtos, { cep: cliente.cep, modalidade: req.body?.modalidade, frete });
+    // O frete é cotado de novo aqui, para cobrar o valor real do Melhor Envio
+    const qtd = (Array.isArray(req.body?.itens) ? req.body.itens : []).reduce((s, i) => s + (Number(i.qtd) || 0), 0);
+    const opcoes = await cotarFrete(cliente.cep, qtd, frete);
+    pedido = calcularPedido(req.body?.itens, produtos, { opcoes, modalidade: String(req.body?.modalidade ?? '') });
     conferirEstoque(req.body.itens, produtos);
   } catch (e) {
     return res.status(400).json({ erro: e.message });
