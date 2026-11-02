@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Torcedor de Arquibancada — Camisas Tailandesas</title>
+  <meta name="description" content="Camisas de time tailandesas com qualidade premium. Brasileirão, Europa, Seleções e Retrô. Envio para todo o Brasil.">
+  <meta name="theme-color" content="#0d0f0e">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230d0f0e'/%3E%3Cpath d='M5 25h22v-4H5zM9 19h18v-4H9zM13 13h14V9H13z' fill='%23f5d90a'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="faixa-promo">🔥 Frete grátis a partir de <span id="promo-qtd">2</span> camisas · Pix com 5% de desconto · Envio para todo o Brasil</div>
+
+  <header class="topo">
+    <div class="container topo__linha">
+      <a href="#" class="logo" aria-label="Torcedor de Arquibancada — início">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 27h26v-5H3zM8 20h21v-5H8zM13 13h16V8H13z" /></svg>
+        <span>Torcedor<br><b>de Arquibancada</b></span>
+      </a>
+      <nav class="menu" aria-label="Principal">
+        <a href="#catalogo">Camisas</a>
+        <a href="#medidas">Tabela de medidas</a>
+        <a href="#duvidas">Dúvidas</a>
+      </nav>
+      <button class="btn-carrinho" id="abrir-carrinho" aria-label="Abrir carrinho">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h-3M7 4l2 11h10l2-8H8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/></svg>
+        <span class="btn-carrinho__qtd" id="qtd-carrinho">0</span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero__grade">
+        <div class="hero__texto">
+          <p class="selo">Qualidade tailandesa 1:1</p>
+          <h1>Vista o manto<br>de quem <em>vive</em> o jogo.</h1>
+          <p class="hero__sub">Camisas com acabamento premium, tecido leve e detalhes fiéis. Do Brasileirão às Seleções, do lançamento ao retrô.</p>
+          <div class="hero__acoes">
+            <a href="#catalogo" class="btn btn--primario">Ver camisas</a>
+            <a href="#" class="btn btn--fantasma" data-whats>Falar no WhatsApp</a>
+          </div>
+        </div>
+        <div class="hero__camisas" id="hero-camisas" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <section class="vantagens container" aria-label="Vantagens">
+      <div><strong>Premium 1:1</strong><span>Escudos e patrocínios bordados ou termocolados</span></div>
+      <div><strong>Envio nacional</strong><span>Postagem em até 2 dias úteis com rastreio</span></div>
+      <div><strong>Pix ou cartão</strong><span>5% off no Pix ou parcelado em até 3x</span></div>
+      <div><strong>Troca fácil</strong><span>Errou o tamanho? A primeira troca é por nossa conta</span></div>
+    </section>
+
+    <section class="catalogo container" id="catalogo">
+      <div class="secao-titulo">
+        <h2>Camisas</h2>
+        <p>Escolha o seu manto. Personalização com nome e número disponível.</p>
+      </div>
+
+      <div class="filtros">
+        <div class="chips" id="chips" role="tablist" aria-label="Categorias"></div>
+        <div class="filtros__direita">
+          <input type="search" id="busca" placeholder="Buscar time ou seleção…" aria-label="Buscar">
+          <select id="ordem" aria-label="Ordenar">
+            <option value="destaque">Destaques</option>
+            <option value="menor">Menor preço</option>
+            <option value="maior">Maior preço</option>
+            <option value="nome">Nome (A–Z)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grade" id="grade"></div>
+    </section>
+
+    <section class="medidas container" id="medidas">
+      <div class="secao-titulo">
+        <h2>Tabela de medidas</h2>
+        <p>Medidas da camisa esticada, em centímetros. A versão Jogador tem modelagem mais justa — se preferir folga, peça um tamanho acima.</p>
+      </div>
+      <div class="tabela-rolagem">
+        <table>
+          <thead><tr><th>Tamanho</th><th>P</th><th>M</th><th>G</th><th>GG</th><th>XGG</th></tr></thead>
+          <tbody>
+            <tr><th>Largura</th><td>50</td><td>52</td><td>54</td><td>57</td><td>60</td></tr>
+            <tr><th>Altura</th><td>70</td><td>72</td><td>74</td><td>76</td><td>78</td></tr>
+            <tr><th>Altura sugerida</th><td>1,60–1,68</td><td>1,68–1,75</td><td>1,75–1,82</td><td>1,80–1,86</td><td>1,84–1,92</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="duvidas container" id="duvidas">
+      <div class="secao-titulo"><h2>Dúvidas frequentes</h2></div>
+      <details>
+        <summary>O que é uma camisa tailandesa?</summary>
+        <p>São camisas produzidas na Tailândia com alto padrão de acabamento, tecido e detalhes muito próximos aos modelos originais. Não são produtos oficiais licenciados dos clubes — por isso têm um preço bem mais acessível.</p>
+      </details>
+      <details>
+        <summary>Qual a diferença entre versão Torcedor e Jogador?</summary>
+        <p>A Torcedor tem modelagem mais solta e escudo bordado. A Jogador é mais justa ao corpo, com tecido mais leve e escudo termocolado, igual à usada em campo.</p>
+      </details>
+      <details>
+        <summary>Como funciona o pedido?</summary>
+        <p>Monte seu carrinho aqui no site e clique em “Finalizar no WhatsApp”. O pedido chega pronto pra gente, confirmamos disponibilidade, frete e enviamos o Pix ou link de pagamento.</p>
+      </details>
+      <details>
+        <summary>Qual o prazo de entrega?</summary>
+        <p>Peças a pronta-entrega são postadas em até 2 dias úteis. O prazo dos Correios varia conforme a região (em média de 3 a 10 dias úteis). Modelos sob encomenda levam de 15 a 25 dias úteis.</p>
+      </details>
+      <details>
+        <summary>Posso trocar se não servir?</summary>
+        <p>Sim. Você tem até 7 dias após o recebimento para solicitar a troca, com a peça sem uso e com etiqueta. Camisas personalizadas não têm troca, a menos que venham com defeito.</p>
+      </details>
+    </section>
+  </main>
+
+  <footer class="rodape">
+    <div class="container rodape__grade">
+      <div>
+        <a href="#" class="logo logo--rodape">
+          <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 27h26v-5H3zM8 20h21v-5H8zM13 13h16V8H13z" /></svg>
+          <span>Torcedor<br><b>de Arquibancada</b></span>
+        </a>
+        <p>Feito por quem fica de pé o jogo inteiro.</p>
+      </div>
+      <div class="rodape__links">
+        <a href="#" data-whats>WhatsApp</a>
+        <a href="#" id="link-instagram" target="_blank" rel="noopener">Instagram</a>
+        <a href="#duvidas">Trocas e prazos</a>
+      </div>
+    </div>
+    <div class="container rodape__base">© <span id="ano"></span> Torcedor de Arquibancada. Produtos não oficiais, sem vínculo com clubes ou federações.</div>
+  </footer>
+
+  <!-- Botão flutuante -->
+  <a href="#" class="whats-flutuante" data-whats aria-label="Falar no WhatsApp">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9 0-1.4.7-2 1-2.3.3-.3.6-.3.8-.3h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .6l-.4.6-.4.5c-.1.2-.3.3-.1.6.2.3.8 1.4 1.8 2.2 1.2 1.1 2.2 1.4 2.5 1.6.3.1.5.1.7-.1l.9-1.1c.2-.3.4-.2.7-.1l2 1c.3.1.5.2.6.3 0 .2 0 .8-.3 1.4z"/></svg>
+  </a>
+
+  <!-- Modal do produto -->
+  <dialog class="modal" id="modal">
+    <form method="dialog" class="modal__fechar-form"><button class="modal__fechar" aria-label="Fechar">×</button></form>
+    <div class="modal__corpo" id="modal-corpo"></div>
+  </dialog>
+
+  <!-- Carrinho -->
+  <div class="sombra" id="sombra" hidden></div>
+  <aside class="gaveta" id="gaveta" aria-label="Carrinho" aria-hidden="true">
+    <div class="gaveta__topo">
+      <h2>Seu carrinho</h2>
+      <button class="modal__fechar" id="fechar-carrinho" aria-label="Fechar carrinho">×</button>
+    </div>
+    <div class="gaveta__itens" id="itens"></div>
+    <div class="gaveta__rodape" id="gaveta-rodape">
+      <p class="frete" id="frete"></p>
+      <div class="subtotal"><span>Subtotal</span><strong id="subtotal">R$ 0,00</strong></div>
+      <label>Seu nome<input type="text" id="cli-nome" autocomplete="name" placeholder="Como podemos te chamar?"></label>
+      <label>CEP (para calcular o frete)<input type="text" id="cli-cep" inputmode="numeric" autocomplete="postal-code" placeholder="00000-000" maxlength="9"></label>
+      <label>Pagamento
+        <select id="cli-pagamento">
+          <option>Pix (5% de desconto)</option>
+          <option>Cartão de crédito</option>
+        </select>
+      </label>
+      <button class="btn btn--whats" id="finalizar">Finalizar no WhatsApp</button>
+    </div>
+  </aside>
+
+  <div class="aviso" id="aviso" role="status" aria-live="polite"></div>
+
+  <script src="produtos.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
