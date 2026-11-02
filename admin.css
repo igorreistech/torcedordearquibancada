@@ -41,7 +41,7 @@
 .adm-editar { font-weight: 600; }
 .adm-excluir:hover { border-color: var(--vermelho); }
 
-.adm-editor { width: min(640px, calc(100% - 24px)); }
+.adm-editor { width: min(640px, calc(100% - 24px)); overflow: hidden; }
 .adm-form { display: flex; flex-direction: column; max-height: calc(100dvh - 32px); }
 .adm-form__topo { display: flex; justify-content: space-between; align-items: center; padding: 18px 20px; border-bottom: 1px solid var(--linha); }
 .adm-form__topo h2 { font-family: var(--titulo); font-weight: 800; font-style: italic; font-size: 30px; letter-spacing: .5px; }
