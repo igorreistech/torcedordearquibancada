@@ -62,6 +62,18 @@ function cepNoEstado(cep) {
   return n >= de && n <= ate;
 }
 
+// Tabela de preços da loja: atalhos no cadastro de camisa do painel.
+// preco: valor fixo. precoDe/precoAte: faixa (o dono digita o valor). grade: tamanhos sugeridos.
+const TABELA_PRECOS = [
+  { nome: 'Temporada 26/27 · Torcedor', preco: 145, versao: 'Torcedor', temporada: '26/27' },
+  { nome: 'Temporada 26/27 · Jogador', preco: 175, versao: 'Jogador', temporada: '26/27' },
+  { nome: 'Temporada 25/26', preco: 120, temporada: '25/26' },
+  { nome: 'Kit Regata', preco: 135, versao: 'Kit Regata' },
+  { nome: 'Kit Infantil', precoDe: 90, precoAte: 140, versao: 'Infantil', grade: ['2', '4', '6', '8', '10', '12', '14', '16'] },
+  { nome: 'Feminina promocional', preco: 90, versao: 'Feminina', promocao: true, grade: ['P', 'M', 'G', 'GG'] },
+  { nome: 'Retrô', preco: 170, versao: 'Retrô', categoria: 'retro' },
+];
+
 // ============================================================
 //  CATÁLOGO INICIAL — usado só até o primeiro salvamento no painel
 //  cores:  [base, secundária, detalhe] — desenham a camisa quando não há foto
@@ -255,5 +267,5 @@ function validarProduto(p = {}) {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { LOJA, CATEGORIAS, PADROES, TAGS, FRETE_PADRAO, PRODUTOS_PADRAO, precoPersonalizacaoDe, validarFrete, qtdParaFreteGratis, cepNoEstado, tamanhosDe, calcularPedido, conferirEstoque, baixarEstoque, validarCliente, validarProduto };
+  module.exports = { LOJA, CATEGORIAS, TABELA_PRECOS, PADROES, TAGS, FRETE_PADRAO, PRODUTOS_PADRAO, precoPersonalizacaoDe, validarFrete, qtdParaFreteGratis, cepNoEstado, tamanhosDe, calcularPedido, conferirEstoque, baixarEstoque, validarCliente, validarProduto };
 }

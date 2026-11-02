@@ -209,6 +209,34 @@
   }
   form.personalizavel.addEventListener('change', atualizarPersonalizacao);
 
+  // Atalhos da tabela de preços da loja (TABELA_PRECOS em produtos.js)
+  $('#tabela-precos').innerHTML = '<p class="ajuda">Tabela de preços (clique para preencher):</p>' + TABELA_PRECOS
+    .map((t, n) => `<button type="button" class="adm-chip" data-tabela="${n}">${esc(t.nome)} · <b>${t.preco ? brl(t.preco) : `${brl(t.precoDe)} a ${brl(t.precoAte)}`}</b></button>`)
+    .join('');
+
+  $('#tabela-precos').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-tabela]');
+    if (!b) return;
+    const t = TABELA_PRECOS[b.dataset.tabela];
+    document.querySelectorAll('[data-tabela]').forEach((x) => x.classList.toggle('ativo', x === b));
+    if (t.versao) renderVersoes(t.versao);
+    if (t.temporada) form.temporada.value = t.temporada;
+    if (t.categoria) form.categoria.value = t.categoria;
+    if (t.promocao) form.querySelector('[name=tag][value=promocao]').checked = true;
+    // Grade sugerida só substitui o estoque se nenhuma quantidade foi preenchida ainda
+    if (t.grade && !form.encomenda.checked && lerLinhasEstoque().every((x) => x.qtd === '')) {
+      preencherEstoque(t.grade.map((tamanho) => ({ tamanho, qtd: '' })));
+    }
+    if (t.preco) {
+      form.preco.value = paraTexto(t.preco);
+      form.preco.placeholder = 'Ex.: 145,00';
+    } else {
+      form.preco.value = '';
+      form.preco.placeholder = `De ${paraTexto(t.precoDe)} a ${paraTexto(t.precoAte)}`;
+      form.preco.focus();
+    }
+  });
+
   function abrirEditor(i) {
     editando = i;
     const p = produtos[i] || { categoria: CATEGORIAS[0].id, versao: 'Torcedor', cores: ['#ffffff', '#111111', '#111111'], padrao: 'solido', tags: [], fotos: [], ativo: true };
@@ -220,6 +248,8 @@
     form.categoria.value = p.categoria;
     form.preco.value = paraTexto(p.preco);
     form.precoAntigo.value = paraTexto(p.precoAntigo);
+    form.preco.placeholder = 'Ex.: 145,00';
+    document.querySelectorAll('[data-tabela]').forEach((x) => x.classList.remove('ativo'));
     form.ativo.checked = p.ativo !== false;
     form.personalizavel.checked = p.personalizavel !== false;
     form.precoPersonalizacao.value = paraTexto(p.precoPersonalizacao ?? null);

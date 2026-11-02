@@ -68,6 +68,10 @@
 .adm-estoque__acoes .btn { padding: 9px 14px; font-size: 13px; }
 .adm-chip { padding: 7px 12px; border-radius: 999px; border: 1px solid var(--linha); background: var(--grafite); font-size: 13px; cursor: pointer; }
 .adm-chip:hover { border-color: var(--laranja); }
+.adm-chip.ativo { border-color: var(--laranja); background: rgba(255, 107, 0, .15); }
+.adm-chip b { color: var(--laranja); font-weight: 700; }
+.adm-tabela-precos { display: flex; flex-wrap: wrap; gap: 6px; }
+.adm-tabela-precos .ajuda { flex-basis: 100%; margin: 0; }
 
 .adm-fotos { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
 .adm-fotos:empty { display: none; }
