@@ -4,7 +4,6 @@
   const normalizar = (t) => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const linkWhats = (msg) => `https://wa.me/${LOJA.whatsapp}?text=${encodeURIComponent(msg)}`;
-  const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
 
   let produtos = [];
   const produto = (id) => produtos.find((p) => p.id === id);
@@ -89,7 +88,7 @@
         <h3>${esc(p.nome)} <span>${esc(p.temporada)}</span></h3>
         <p class="card__versao">Versão ${esc(p.versao)}</p>
         <p class="preco">${p.precoAntigo ? `<s>${brl(p.precoAntigo)}</s>` : ''}<strong>${brl(p.preco)}</strong></p>
-        <p class="parcela">ou ${LOJA.maxParcelas}x de ${brl(p.preco / LOJA.maxParcelas)} no cartão</p>
+        <p class="parcela">no Pix ou em até ${LOJA.maxParcelas}x no cartão</p>
         <button class="btn btn--primario btn--bloco">Escolher tamanho</button>
       </div>
     </article>`;
@@ -223,8 +222,7 @@
     return `<div class="resumo">
       <div><span>Subtotal</span><span>${brl(p.subtotal)}</span></div>
       <div><span>Frete</span><span>${p.frete ? brl(p.frete) : 'Grátis'}</span></div>
-      <div class="resumo__total"><span>Total no cartão</span><strong>${brl(p.total)}</strong></div>
-      <div class="resumo__pix"><span>No Pix (${Math.round(LOJA.descontoPix * 100)}% off)</span><strong>${brl(p.totalPix)}</strong></div>
+      <div class="resumo__total"><span>Total</span><strong>${brl(p.total)}</strong></div>
     </div>`;
   }
 
@@ -278,8 +276,8 @@
   });
 
   // ---------- Etapas do checkout ----------
-  const TITULOS = { carrinho: 'Seu carrinho', dados: 'Entrega', pagamento: 'Pagamento', resultado: 'Seu pedido' };
-  const ORDEM = ['carrinho', 'dados', 'pagamento'];
+  const TITULOS = { carrinho: 'Seu carrinho', dados: 'Entrega', resultado: 'Seu pedido' };
+  const ORDEM = ['carrinho', 'dados'];
   let etapa = 'carrinho';
   let cliente = null;
 
@@ -292,11 +290,7 @@
       el.classList.toggle('feito', i < ORDEM.indexOf(nova));
     });
     $('#gaveta-titulo').textContent = TITULOS[nova];
-    $('#voltar').hidden = !(nova === 'dados' || nova === 'pagamento');
-    gaveta.classList.toggle('larga', nova === 'pagamento');
-    if (nova !== 'resultado') pararPix();
-    if (nova === 'pagamento') montarBrick();
-    else desmontarBrick();
+    $('#voltar').hidden = nova !== 'dados';
     if (nova === 'dados') $('#dados-resumo').innerHTML = resumoHTML(pedidoAtual());
     $('#gaveta-corpo').scrollTop = 0;
     renderCarrinho();
@@ -315,7 +309,6 @@
   // Máscaras e busca de endereço pelo CEP
   const form = $('#form-dados');
   const mascaras = {
-    cpf: (d) => d.slice(0, 11).replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2'),
     telefone: (d) => d.slice(0, 11).replace(/^(\d{2})(\d)/, '($1) $2').replace(/(\d)(\d{4})$/, '$1-$2'),
     cep: (d) => d.slice(0, 8).replace(/^(\d{5})(\d)/, '$1-$2'),
   };
@@ -342,161 +335,79 @@
     try {
       cliente = validarCliente(Object.fromEntries(new FormData(form)));
       $('#dados-erro').textContent = '';
-      irPara('pagamento');
+      pagar();
     } catch (err) {
       $('#dados-erro').textContent = err.message;
     }
   });
 
-  // ---------- Pagamento (Mercado Pago Payment Brick) ----------
-  let mp = null, brick = null, sdk = null;
-
-  function carregarSDK() {
-    if (window.MercadoPago) return Promise.resolve();
-    return (sdk ||= new Promise((ok, falha) => {
-      const s = document.createElement('script');
-      s.src = 'https://sdk.mercadopago.com/js/v2';
-      s.onload = ok;
-      s.onerror = () => { sdk = null; falha(new Error('Não foi possível carregar o Mercado Pago. Verifique sua conexão.')); };
-      document.head.append(s);
-    }));
-  }
-
-  function desmontarBrick() {
-    if (brick) { brick.unmount(); brick = null; }
-  }
-
-  async function montarBrick() {
-    const pedido = pedidoAtual();
-    $('#pag-resumo').innerHTML = resumoHTML(pedido);
-    $('#pag-erro').textContent = '';
-    desmontarBrick();
-    $('#brick').innerHTML = '<p class="carregando">Carregando formas de pagamento…</p>';
+  // ---------- Pagamento (link do Checkout InfinitePay) ----------
+  async function pagar() {
+    const botao = $('#ir-pagar');
+    const texto = botao.textContent;
+    botao.disabled = true;
+    botao.textContent = 'Gerando pagamento…';
     try {
-      await carregarSDK();
-      if (etapa !== 'pagamento') return;
-      mp ||= new MercadoPago(LOJA.mercadoPagoPublicKey, { locale: 'pt-BR' });
-      $('#brick').innerHTML = '';
-      const criado = await mp.bricks().create('payment', 'brick', {
-        initialization: { amount: pedido.total, payer: { email: cliente.email } },
-        customization: {
-          paymentMethods: { creditCard: 'all', bankTransfer: ['pix'], maxInstallments: LOJA.maxParcelas },
-          visual: { style: { theme: 'dark', customVariables: { baseColor: '#ff6b00' } } },
-        },
-        callbacks: {
-          onReady: () => {},
-          onError: (erro) => console.error(erro),
-          onSubmit: ({ formData }) => pagar(formData),
-        },
+      const r = await fetch('/api/pagamento', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itens: carrinho, cliente }),
       });
-      if (etapa === 'pagamento') brick = criado;
-      else criado.unmount();
+      const dados = await r.json().catch(() => ({}));
+      if (!r.ok || !dados.url) throw new Error(dados.erro || 'Não foi possível gerar o pagamento. Tente de novo.');
+      location.href = dados.url;
     } catch (e) {
-      $('#brick').innerHTML = '';
-      $('#pag-erro').textContent = e.message || 'Não foi possível carregar o pagamento.';
+      $('#dados-erro').textContent = e.message;
+      botao.disabled = false;
+      botao.textContent = texto;
     }
   }
 
-  async function pagar(formData) {
-    $('#pag-erro').textContent = '';
-    const r = await fetch('/api/pagamento', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ itens: carrinho, cliente, pagamento: formData, chave: uuid() }),
-    });
-    const dados = await r.json().catch(() => ({}));
-    if (!r.ok) {
-      $('#pag-erro').textContent = dados.erro || 'Não foi possível processar o pagamento.';
-      throw new Error(dados.erro);
-    }
-    mostrarResultado(dados);
-  }
-
-  // ---------- Resultado ----------
-  const MOTIVOS = {
-    cc_rejected_insufficient_amount: 'Saldo ou limite insuficiente.',
-    cc_rejected_bad_filled_security_code: 'Código de segurança inválido.',
-    cc_rejected_bad_filled_date: 'Data de validade incorreta.',
-    cc_rejected_bad_filled_card_number: 'Número do cartão incorreto.',
-    cc_rejected_bad_filled_other: 'Confira os dados do cartão.',
-    cc_rejected_call_for_authorize: 'Seu banco precisa autorizar o pagamento. Ligue para ele e tente de novo.',
-    cc_rejected_card_disabled: 'Cartão inativo. Ative com seu banco ou use outro cartão.',
-    cc_rejected_duplicated_payment: 'Você já fez um pagamento com esse valor. Use outro cartão ou o Pix.',
-    cc_rejected_high_risk: 'Pagamento recusado por segurança. Tente outro cartão ou o Pix.',
-    cc_rejected_max_attempts: 'Limite de tentativas atingido. Use outro cartão ou o Pix.',
-  };
-  let timerPix = null;
-  let pixPendente = false;
-
-  function pararPix() {
-    clearInterval(timerPix);
-    timerPix = null;
-    pixPendente = false;
-  }
-
-  function concluirPedido(d, titulo, texto) {
-    carrinho = [];
-    salvar();
-    const msg = `Olá! Fiz o pedido ${d.referencia} no site e quero acompanhar a entrega.`;
-    $('#resultado').innerHTML = `<div class="resultado resultado--ok">
-      <div class="resultado__icone">✓</div>
-      <h3>${titulo}</h3>
-      <p>Pedido <b>${esc(d.referencia)}</b> · ${brl(d.valor)}</p>
-      <p>${texto}</p>
-      <a class="btn btn--whats" href="${linkWhats(msg)}" target="_blank" rel="noopener">Acompanhar pelo WhatsApp</a>
-    </div>`;
-  }
-
-  function mostrarResultado(d) {
+  // ---------- Volta da InfinitePay ----------
+  // Depois de pagar, a InfinitePay manda o cliente de volta com order_nsu, transaction_nsu e slug.
+  // O servidor confere com a InfinitePay se o pagamento foi mesmo aprovado.
+  async function conferirRetorno() {
+    const q = new URLSearchParams(location.search);
+    const pedido = q.get('order_nsu'), transacao = q.get('transaction_nsu'), slug = q.get('slug');
+    if (!pedido || !transacao || !slug) return;
+    history.replaceState(null, '', location.pathname);
+    abrirCarrinho();
     irPara('resultado');
-    if (d.status === 'approved') {
-      return concluirPedido(d, 'Pagamento aprovado!', `Enviamos a confirmação para <b>${esc(cliente.email)}</b>. Assim que a camisa for postada, mandamos o código de rastreio.`);
-    }
-    if (d.status === 'in_process') {
-      return concluirPedido(d, 'Pagamento em análise', 'O Mercado Pago está analisando o pagamento, o que costuma levar poucos minutos. Você recebe a resposta por e-mail.');
-    }
-    if (d.status === 'pending' && d.pix) {
-      pixPendente = true;
-      $('#resultado').innerHTML = `<div class="resultado">
-        <h3>Pague com Pix</h3>
-        <p>Pedido <b>${esc(d.referencia)}</b> · <b>${brl(d.valor)}</b></p>
-        <img class="pix-qr" src="data:image/png;base64,${d.pix.imagem}" alt="QR Code do Pix">
-        <p class="pix-instrucao">Escaneie o QR Code no app do seu banco ou use o Pix Copia e Cola:</p>
-        <textarea class="pix-codigo" id="pix-codigo" readonly rows="3">${esc(d.pix.codigo)}</textarea>
-        <button type="button" class="btn btn--primario btn--bloco" id="copiar-pix">Copiar código Pix</button>
-        <p class="pix-aguardando"><span class="pulso"></span> Aguardando pagamento… esta tela atualiza sozinha.</p>
+    $('#resultado').innerHTML = '<p class="carregando">Confirmando pagamento…</p>';
+
+    let s = {};
+    try {
+      s = await (await fetch('/api/status?' + new URLSearchParams({ order_nsu: pedido, transaction_nsu: transacao, slug }))).json();
+    } catch {}
+
+    const whats = (msg) => `<a class="btn btn--whats" href="${linkWhats(msg)}" target="_blank" rel="noopener">Falar no WhatsApp</a>`;
+    if (s.pago) {
+      carrinho = [];
+      salvar();
+      const recibo = q.get('receipt_url') || '';
+      const metodo = s.metodo === 'pix' ? ' · Pix' : s.metodo ? ' · Cartão' : '';
+      $('#resultado').innerHTML = `<div class="resultado resultado--ok">
+        <div class="resultado__icone">✓</div>
+        <h3>Pagamento aprovado!</h3>
+        <p>Pedido <b>${esc(pedido)}</b>${s.valor ? ` · ${brl(s.valor)}` : ''}${metodo}</p>
+        <p>Recebemos seu pedido! Assim que a camisa for postada, mandamos o código de rastreio no seu WhatsApp.</p>
+        ${/^https:\/\//.test(recibo) ? `<a class="btn btn--fantasma" href="${esc(recibo)}" target="_blank" rel="noopener">Ver comprovante</a>` : ''}
+        ${whats(`Olá! Paguei o pedido ${pedido} no site e quero acompanhar a entrega.`)}
       </div>`;
-      $('#copiar-pix').addEventListener('click', async () => {
-        const campo = $('#pix-codigo');
-        try { await navigator.clipboard.writeText(campo.value); } catch { campo.select(); document.execCommand('copy'); }
-        $('#copiar-pix').textContent = 'Código copiado!';
-      });
-      const inicio = Date.now();
-      timerPix = setInterval(async () => {
-        if (Date.now() - inicio > 30 * 60 * 1000) return pararPix();
-        try {
-          const s = await (await fetch(`/api/status?id=${d.id}`)).json();
-          if (s.status === 'approved') {
-            pararPix();
-            concluirPedido(d, 'Pix recebido!', `Pagamento confirmado. Enviamos os detalhes para <b>${esc(cliente.email)}</b>.`);
-          }
-        } catch {}
-      }, 5000);
-      return;
+    } else {
+      $('#resultado').innerHTML = `<div class="resultado resultado--erro">
+        <div class="resultado__icone">!</div>
+        <h3>Pagamento não confirmado</h3>
+        <p>Ainda não identificamos o pagamento do pedido <b>${esc(pedido)}</b>. Se você já pagou, chama a gente no WhatsApp com o número do pedido.</p>
+        ${whats(`Olá! Fiz o pagamento do pedido ${pedido} e o site não confirmou.`)}
+      </div>`;
     }
-    $('#resultado').innerHTML = `<div class="resultado resultado--erro">
-      <div class="resultado__icone">!</div>
-      <h3>Pagamento não aprovado</h3>
-      <p>${MOTIVOS[d.status_detail] || 'O pagamento foi recusado. Tente outro cartão ou pague com Pix.'}</p>
-      <button type="button" class="btn btn--primario btn--bloco" id="tentar-novamente">Tentar novamente</button>
-    </div>`;
-    $('#tentar-novamente').addEventListener('click', () => irPara('pagamento'));
   }
 
   // ---------- Gaveta ----------
   const gaveta = $('#gaveta'), sombra = $('#sombra');
   function abrirCarrinho() {
-    if (etapa === 'resultado' && !pixPendente) irPara('carrinho');
+    if (etapa === 'resultado') irPara('carrinho');
     sombra.hidden = false;
     requestAnimationFrame(() => { gaveta.classList.add('aberta'); sombra.classList.add('visivel'); });
     gaveta.setAttribute('aria-hidden', 'false');
@@ -566,6 +477,7 @@
       $('#hero-camisas').innerHTML = destaque.map((p) => `<div class="hero__camisa">${midia(p)}</div>`).join('');
       renderGrade();
       salvar();
+      conferirRetorno();
     })
     .catch(() => {
       $('#grade').innerHTML = '<p class="vazio">Não foi possível carregar as camisas. Atualize a página para tentar de novo.</p>';

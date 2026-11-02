@@ -9,12 +9,11 @@ const LOJA = {
   precoPersonalizacao: 25,                // nome + número
   freteGratisAPartirDe: 2,                // nº de camisas para frete grátis
   frete: 24.9,                            // frete abaixo do mínimo para frete grátis
-  descontoPix: 0.05,                      // 5% de desconto no Pix
-  maxParcelas: 3,                         // parcelas no cartão
+  maxParcelas: 12,                        // parcelas no cartão (texto do site)
   tamanhos: ['P', 'M', 'G', 'GG', 'XGG'],
-  // Chave PÚBLICA do Mercado Pago (Seu negócio > Configurações > Credenciais).
-  // O Access Token NÃO vai aqui: ele fica na variável MP_ACCESS_TOKEN da Vercel.
-  mercadoPagoPublicKey: 'TEST-00000000-0000-0000-0000-000000000000',
+  // InfiniteTag da conta InfinitePay, sem o $ (aparece no canto superior do app).
+  // No app: Vendas > Checkout > Configurações > "Habilitar Checkout Integrado".
+  infinitepayHandle: '',
 };
 
 const CATEGORIAS = [
@@ -88,18 +87,7 @@ function calcularPedido(itens, produtos) {
   const subtotal = arredondar(linhas.reduce((s, l) => s + l.total, 0));
   const frete = qtd >= LOJA.freteGratisAPartirDe ? 0 : LOJA.frete;
   const total = arredondar(subtotal + frete);
-  return { linhas, qtd, subtotal, frete, total, totalPix: arredondar(total * (1 - LOJA.descontoPix)) };
-}
-
-function cpfValido(cpf) {
-  const d = String(cpf).replace(/\D/g, '');
-  if (d.length !== 11 || /^(\d)\1+$/.test(d)) return false;
-  for (let t = 9; t < 11; t++) {
-    let soma = 0;
-    for (let i = 0; i < t; i++) soma += Number(d[i]) * (t + 1 - i);
-    if (((soma * 10) % 11) % 10 !== Number(d[t])) return false;
-  }
-  return true;
+  return { linhas, qtd, subtotal, frete, total };
 }
 
 // Valida e normaliza os dados de entrega. Lança Error com mensagem para o cliente.
@@ -107,13 +95,12 @@ function validarCliente(c = {}) {
   const txt = (v, max = 80) => String(v || '').trim().slice(0, max);
   const dig = (v) => String(v || '').replace(/\D/g, '');
   const r = {
-    nome: txt(c.nome), email: txt(c.email).toLowerCase(), cpf: dig(c.cpf), telefone: dig(c.telefone),
+    nome: txt(c.nome), email: txt(c.email).toLowerCase(), telefone: dig(c.telefone),
     cep: dig(c.cep), rua: txt(c.rua), numero: txt(c.numero, 10), complemento: txt(c.complemento, 40),
     bairro: txt(c.bairro), cidade: txt(c.cidade), uf: txt(c.uf, 2).toUpperCase(),
   };
   if (r.nome.split(/\s+/).length < 2) throw new Error('Informe nome e sobrenome.');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r.email)) throw new Error('E-mail inválido.');
-  if (!cpfValido(r.cpf)) throw new Error('CPF inválido.');
   if (r.telefone.length < 10 || r.telefone.length > 11) throw new Error('Telefone inválido. Use DDD + número.');
   if (r.cep.length !== 8) throw new Error('CEP inválido.');
   if (!r.rua || !r.numero || !r.bairro || !r.cidade) throw new Error('Preencha o endereço completo.');
