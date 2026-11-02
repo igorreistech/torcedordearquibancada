@@ -68,6 +68,13 @@
       ? `<img src="${esc(p.fotos[0])}" alt="">`
       : `<span class="adm-amostra" style="background:linear-gradient(135deg, ${p.cores[0]} 0 50%, ${p.cores[1]} 50%)"></span>`;
 
+  function textoEstoque(p) {
+    if (!p.estoque) return 'sob encomenda';
+    const total = LOJA.tamanhos.reduce((s, t) => s + (p.estoque[t] || 0), 0);
+    if (!total) return '<b>esgotada</b>';
+    return `estoque: ${LOJA.tamanhos.filter((t) => p.estoque[t]).map((t) => `${t} ${p.estoque[t]}`).join(' · ')}`;
+  }
+
   function renderLista() {
     const ativos = produtos.filter((p) => p.ativo !== false).length;
     $('#contagem').textContent = `${produtos.length} camisas · ${ativos} visíveis no site`;
@@ -81,7 +88,7 @@
             <div class="adm-item__capa">${capa(p)}</div>
             <div class="adm-item__info">
               <strong>${esc(p.nome)} <span>${esc(p.temporada)}</span></strong>
-              <small>${esc(categoria(p.categoria))} · ${esc(p.versao)} · ${p.fotos?.length || 0} foto(s)${p.ativo === false ? ' · <b>oculta</b>' : ''}</small>
+              <small>${esc(categoria(p.categoria))} · ${esc(p.versao)} · ${p.fotos?.length || 0} foto(s) · ${textoEstoque(p)}${p.ativo === false ? ' · <b>oculta</b>' : ''}</small>
             </div>
             <div class="adm-item__preco">${p.precoAntigo ? `<s>${brl(p.precoAntigo)}</s>` : ''}<strong>${brl(p.preco)}</strong></div>
             <div class="adm-item__acoes">
@@ -127,6 +134,16 @@
 
   $('#categoria').innerHTML = CATEGORIAS.map((c) => `<option value="${c.id}">${c.nome}</option>`).join('');
   $('#padrao').innerHTML = PADROES.map((p) => `<option value="${p.id}">${p.nome}</option>`).join('');
+  $('#estoque').innerHTML = LOJA.tamanhos
+    .map((t) => `<label>${t}<input type="number" name="est-${t}" min="0" max="9999" step="1" inputmode="numeric" value="0"></label>`)
+    .join('');
+  const mostrarEstoque = () => {
+    $('#estoque').hidden = !form.controlar.checked;
+    $('#estoque-ajuda').textContent = form.controlar.checked
+      ? 'Quantidade de cada tamanho. Com 0, o tamanho aparece esgotado. O estoque baixa sozinho a cada venda paga.'
+      : 'Desmarcado: a camisa vende sem limite (sob encomenda).';
+  };
+  $('#controlar').addEventListener('change', mostrarEstoque);
   $('#tags').innerHTML = TAGS.map((t) => `<label class="check"><input type="checkbox" name="tag" value="${t.id}"> ${t.nome}</label>`).join('');
 
   const paraNumero = (v) => Number(String(v).replace(/\./g, '').replace(',', '.'));
@@ -147,6 +164,9 @@
     form.querySelectorAll('[name=tag]').forEach((c) => { c.checked = p.tags.includes(c.value); });
     p.cores.forEach((cor, n) => { form[`cor${n}`].value = cor; });
     form.padrao.value = p.padrao;
+    form.controlar.checked = Boolean(p.estoque);
+    LOJA.tamanhos.forEach((t) => { form[`est-${t}`].value = p.estoque?.[t] ?? 0; });
+    mostrarEstoque();
     fotos = [...(p.fotos || [])];
     $('#envio-status').textContent = '';
     $('#editor-erro').textContent = '';
@@ -232,6 +252,7 @@
       padrao: form.padrao.value,
       fotos,
       ativo: form.ativo.checked,
+      estoque: form.controlar.checked ? Object.fromEntries(LOJA.tamanhos.map((t) => [t, Number(form[`est-${t}`].value)])) : null,
     };
     let produto;
     try { produto = validarProduto(dados); } catch (err) { return ($('#editor-erro').textContent = err.message); }

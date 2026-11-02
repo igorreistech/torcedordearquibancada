@@ -81,7 +81,7 @@
     return `<article class="card" data-id="${p.id}" tabindex="0">
       <div class="card__midia${p.fotos?.length ? ' card__midia--foto' : ''}">
         ${midia(p)}
-        <div class="card__tags">${p.tags.map((t) => `<span class="tag tag--${t}">${ROTULOS[t]}</span>`).join('')}</div>
+        <div class="card__tags">${esgotado(p) ? '<span class="tag tag--esgotado">Esgotada</span>' : p.tags.map((t) => `<span class="tag tag--${t}">${ROTULOS[t]}</span>`).join('')}</div>
         ${desconto ? `<span class="card__desconto">-${desconto}%</span>` : ''}
       </div>
       <div class="card__info">
@@ -89,7 +89,7 @@
         <p class="card__versao">Versão ${esc(p.versao)}</p>
         <p class="preco">${p.precoAntigo ? `<s>${brl(p.precoAntigo)}</s>` : ''}<strong>${brl(p.preco)}</strong></p>
         <p class="parcela">no Pix ou em até ${LOJA.maxParcelas}x no cartão</p>
-        <button class="btn btn--primario btn--bloco">Escolher tamanho</button>
+        ${esgotado(p) ? '<button class="btn btn--fantasma btn--bloco" disabled>Esgotada</button>' : '<button class="btn btn--primario btn--bloco">Escolher tamanho</button>'}
       </div>
     </article>`;
   }
@@ -127,7 +127,8 @@
         <p class="preco">${p.precoAntigo ? `<s>${brl(p.precoAntigo)}</s>` : ''}<strong>${brl(p.preco)}</strong></p>
 
         <p class="rotulo">Tamanho <a href="#medidas" class="link-medidas">ver medidas</a></p>
-        <div class="tamanhos">${LOJA.tamanhos.map((t) => `<button type="button" data-tam="${t}">${t}</button>`).join('')}</div>
+        <div class="tamanhos">${LOJA.tamanhos.map((t) => `<button type="button" data-tam="${t}" ${disponivel(p, t) ? '' : 'disabled title="Esgotado"'}>${t}</button>`).join('')}</div>
+        <p class="estoque-aviso" id="m-estoque"></p>
 
         <label class="check"><input type="checkbox" id="m-personalizar"> Personalizar com nome e número <b>+ ${brl(LOJA.precoPersonalizacao)}</b></label>
         <div class="personalizacao" id="m-campos" hidden>
@@ -147,6 +148,11 @@
     modal.showModal();
   }
 
+  // Quanto ainda dá para adicionar de um tamanho, descontando o que já está no carrinho.
+  const restante = (p, tamanho) =>
+    disponivel(p, tamanho) - carrinho.filter((i) => i.id === p.id && i.tamanho === tamanho).reduce((s, i) => s + i.qtd, 0);
+  const limiteQtd = () => Math.min(20, sel.tamanho ? Math.max(1, restante(sel.p, sel.tamanho)) : 20);
+
   const precoUnit = (p, personalizado) => p.preco + (personalizado ? LOJA.precoPersonalizacao : 0);
 
   function atualizarTotalModal() {
@@ -165,10 +171,14 @@
       sel.tamanho = tam.dataset.tam;
       document.querySelectorAll('[data-tam]').forEach((b) => b.classList.toggle('ativo', b === tam));
       $('#m-erro').textContent = '';
+      const tem = disponivel(sel.p, sel.tamanho);
+      $('#m-estoque').textContent = tem <= 3 ? `Últimas ${tem} unidade${tem > 1 ? 's' : ''} neste tamanho!` : '';
+      sel.qtd = Math.min(sel.qtd, limiteQtd());
+      atualizarTotalModal();
     }
     const q = e.target.closest('[data-qtd]');
     if (q) {
-      sel.qtd = Math.max(1, Math.min(20, sel.qtd + Number(q.dataset.qtd)));
+      sel.qtd = Math.max(1, Math.min(limiteQtd(), sel.qtd + Number(q.dataset.qtd)));
       atualizarTotalModal();
     }
     if (e.target.closest('.link-medidas')) modal.close();
@@ -189,6 +199,12 @@
 
   function adicionarDoModal() {
     if (!sel.tamanho) return ($('#m-erro').textContent = 'Escolha um tamanho.');
+    const sobra = restante(sel.p, sel.tamanho);
+    if (sel.qtd > sobra) {
+      return ($('#m-erro').textContent = sobra > 0
+        ? `Só dá para adicionar mais ${sobra} neste tamanho.`
+        : 'Você já tem no carrinho todas as unidades deste tamanho.');
+    }
     let nome = '', numero = '';
     if (sel.personalizar) {
       nome = $('#m-nome').value.trim();
@@ -269,7 +285,10 @@
     if (!btn) return;
     const chave = btn.closest('.item').dataset.chave;
     const item = carrinho.find((i) => i.chave === chave);
-    if (btn.dataset.acao === 'mais') item.qtd = Math.min(20, item.qtd + 1);
+    if (btn.dataset.acao === 'mais') {
+      if (restante(produto(item.id), item.tamanho) < 1) return aviso('Não temos mais unidades deste tamanho.');
+      item.qtd = Math.min(20, item.qtd + 1);
+    }
     if (btn.dataset.acao === 'menos') item.qtd -= 1;
     if (btn.dataset.acao === 'remover' || item.qtd < 1) carrinho = carrinho.filter((i) => i !== item);
     salvar();
@@ -299,6 +318,7 @@
   $('#continuar').addEventListener('click', () => {
     try {
       pedidoAtual();
+      conferirEstoque(carrinho, produtos);
       irPara('dados');
     } catch (e) {
       aviso(e.message);
@@ -446,7 +466,7 @@
   $('#ordem').addEventListener('change', (e) => { filtro.ordem = e.target.value; renderGrade(); });
   $('#grade').addEventListener('click', (e) => {
     const c = e.target.closest('.card');
-    if (c) abrirProduto(c.dataset.id);
+    if (c && !esgotado(produto(c.dataset.id))) abrirProduto(c.dataset.id);
   });
   $('#grade').addEventListener('keydown', (e) => {
     const c = e.target.closest('.card');

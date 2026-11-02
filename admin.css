@@ -54,6 +54,9 @@
 .adm-opcoes { display: flex; flex-wrap: wrap; gap: 6px 18px; }
 .adm-opcoes .check, .adm-form fieldset > .check { margin-top: 0; display: flex; color: var(--texto); }
 .ajuda { font-size: 12px; color: var(--suave); }
+.adm-estoque { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.adm-estoque label { text-align: center; font-weight: 700; color: var(--texto); }
+.adm-estoque input { text-align: center; padding: 10px 4px; }
 .adm-form__rodape { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px; padding: 14px 20px; border-top: 1px solid var(--linha); }
 .adm-form__rodape .erro { flex: 1 1 100%; margin: 0; min-height: 0; }
 
@@ -77,4 +80,5 @@
   .adm-item__capa { width: 56px; height: 56px; }
   .adm-item__acoes { grid-column: 1 / -1; justify-content: flex-end; }
   .adm-form .duas { grid-template-columns: 1fr; }
+  .adm-estoque { grid-template-columns: repeat(3, 1fr); }
 }

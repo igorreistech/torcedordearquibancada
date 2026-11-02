@@ -68,6 +68,37 @@ const PRODUTOS_PADRAO = [
 // ============================================================
 const arredondar = (v) => Math.round(v * 100) / 100;
 
+// Quantas unidades há de um tamanho. Camisa sem controle de estoque (sob encomenda) não tem limite.
+const disponivel = (p, tamanho) => (p.estoque ? Math.max(0, p.estoque[tamanho] || 0) : Infinity);
+const esgotado = (p) => Boolean(p.estoque) && LOJA.tamanhos.every((t) => disponivel(p, t) === 0);
+
+// Confere se há estoque para o carrinho todo, somando as linhas do mesmo tamanho.
+function conferirEstoque(itens, produtos) {
+  const soma = {};
+  for (const i of itens) soma[`${i.id}|${i.tamanho}`] = (soma[`${i.id}|${i.tamanho}`] || 0) + Number(i.qtd);
+  for (const [chave, qtd] of Object.entries(soma)) {
+    const [id, tamanho] = chave.split('|');
+    const p = produtos.find((x) => x.id === id);
+    if (!p) continue;
+    const tem = disponivel(p, tamanho);
+    if (qtd > tem) {
+      throw new Error(tem
+        ? `Só temos ${tem} unidade${tem > 1 ? 's' : ''} de ${p.nome} ${p.temporada} no tamanho ${tamanho}.`
+        : `${p.nome} ${p.temporada} esgotou no tamanho ${tamanho}.`);
+    }
+  }
+}
+
+// Desconta do estoque os itens de um pedido pago.
+function baixarEstoque(produtos, itens) {
+  return produtos.map((p) => {
+    if (!p.estoque) return p;
+    const estoque = { ...p.estoque };
+    for (const i of itens) if (i.id === p.id) estoque[i.tamanho] = Math.max(0, (estoque[i.tamanho] || 0) - i.qtd);
+    return { ...p, estoque };
+  });
+}
+
 // Recalcula o pedido a partir dos itens do carrinho. O servidor usa esta função
 // para cobrar o preço do catálogo, nunca o valor enviado pelo navegador.
 function calcularPedido(itens, produtos) {
@@ -125,6 +156,9 @@ function validarProduto(p = {}) {
     padrao: PADROES.some((x) => x.id === p.padrao) ? p.padrao : 'solido',
     tags: (Array.isArray(p.tags) ? p.tags : []).filter((t) => TAGS.some((x) => x.id === t)),
     fotos: (Array.isArray(p.fotos) ? p.fotos : []).filter((u) => /^https:\/\/\S+$/.test(u)).slice(0, 8),
+    estoque: p.estoque && typeof p.estoque === 'object'
+      ? Object.fromEntries(LOJA.tamanhos.map((t) => [t, Math.min(9999, Math.max(0, Math.trunc(Number(p.estoque[t]) || 0)))]))
+      : null,
     ativo: p.ativo !== false,
   };
   const quem = r.nome ? `"${r.nome}": ` : '';
@@ -137,5 +171,5 @@ function validarProduto(p = {}) {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { LOJA, CATEGORIAS, PADROES, TAGS, PRODUTOS_PADRAO, calcularPedido, validarCliente, validarProduto };
+  module.exports = { LOJA, CATEGORIAS, PADROES, TAGS, PRODUTOS_PADRAO, calcularPedido, conferirEstoque, baixarEstoque, validarCliente, validarProduto };
 }
