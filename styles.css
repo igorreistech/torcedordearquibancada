@@ -186,6 +186,12 @@ th, td { padding: 12px 14px; text-align: center; border-bottom: 1px solid var(--
 tbody tr:last-child > * { border-bottom: 0; }
 thead th { background: var(--concreto); font-family: var(--titulo); font-weight: 800; font-style: italic; font-size: 20px; letter-spacing: .5px; }
 tbody th { text-align: left; color: var(--suave); font-weight: 500; }
+.tabela-medidas thead th small { display: block; font-family: Inter, sans-serif; font-style: normal; font-size: 11px; font-weight: 500; color: var(--suave); text-transform: none; }
+.tabela-medidas tbody th { text-align: center; color: var(--laranja); font-weight: 800; font-size: 16px; }
+.abas-medidas { margin-bottom: 14px; }
+.tabela-rolagem[hidden] { display: none; }
+.medidas__nota { font-size: 13px; color: var(--suave); padding: 12px 14px; border-top: 1px solid var(--linha); }
+.tabela-medidas tbody tr:nth-child(even) { background: rgba(255, 255, 255, .02); }
 
 /* ---------- FAQ ---------- */
 .duvidas details { border-bottom: 1px solid var(--linha); }

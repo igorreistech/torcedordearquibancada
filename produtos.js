@@ -10,7 +10,7 @@ const LOJA = {
   // Cidade de onde as camisas são enviadas (origem do cálculo de frete no Melhor Envio).
   origem: { cep: '79910-134', cidade: 'Antônio João', uf: 'MS' },
   maxParcelas: 12,                        // parcelas no cartão (texto do site)
-  tamanhos: ['P', 'M', 'G', 'GG', 'XGG'],      // tamanhos das camisas sob encomenda
+  tamanhos: ['P', 'M', 'G', 'GG', '2XL', '3XL'],      // tamanhos das camisas sob encomenda
   // InfiniteTag da conta InfinitePay, sem o $ (aparece no canto superior do app).
   // No app: Vendas > Checkout > Configurações > "Habilitar Checkout Integrado".
   infinitepayHandle: 'torcedor',
@@ -40,7 +40,7 @@ const TAGS = [
 
 // Frete calculado pelo Melhor Envio (Correios PAC e SEDEX), saindo de LOJA.origem.
 // Peso e medidas da embalagem de UMA camisa, acréscimo e frete grátis são ajustados no painel (botão Frete).
-const FRETE_PADRAO = { gratisAPartirDe: 0, acrescimo: 0, peso: 300, largura: 25, altura: 4, comprimento: 30 };
+const FRETE_PADRAO = { gratisAPartirDe: 0, acrescimo: 0, peso: 350, largura: 25, altura: 4, comprimento: 30 };
 
 // ============================================================
 //  CATÁLOGO INICIAL — usado só até o primeiro salvamento no painel

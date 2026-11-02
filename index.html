@@ -85,15 +85,34 @@
     <section class="medidas container" id="medidas">
       <div class="secao-titulo">
         <h2>Tabela de medidas</h2>
-        <p>Medidas da camisa esticada, em centímetros. A versão Jogador tem modelagem mais justa — se preferir folga, peça um tamanho acima.</p>
+        <p>Comprimento e largura são da camisa, em centímetros. Altura e peso são de quem vai vestir, para ajudar a escolher o tamanho.</p>
       </div>
-      <div class="tabela-rolagem">
-        <table>
-          <thead><tr><th>Tamanho</th><th>P</th><th>M</th><th>G</th><th>GG</th><th>XGG</th></tr></thead>
+      <div class="chips abas-medidas" role="tablist" aria-label="Versão">
+        <button class="chip ativo" role="tab" aria-selected="true" data-aba="jogador">Jogador (Player)</button>
+        <button class="chip" role="tab" aria-selected="false" data-aba="feminina">Feminina</button>
+      </div>
+      <div class="tabela-rolagem" data-tabela="jogador">
+        <table class="tabela-medidas">
+          <thead><tr><th>Tamanho</th><th>Comprimento<small>cm</small></th><th>Largura<small>cm</small></th><th>Sua altura<small>cm</small></th><th>Seu peso<small>kg</small></th></tr></thead>
           <tbody>
-            <tr><th>Largura</th><td>50</td><td>52</td><td>54</td><td>57</td><td>60</td></tr>
-            <tr><th>Altura</th><td>70</td><td>72</td><td>74</td><td>76</td><td>78</td></tr>
-            <tr><th>Altura sugerida</th><td>1,60–1,68</td><td>1,68–1,75</td><td>1,75–1,82</td><td>1,80–1,86</td><td>1,84–1,92</td></tr>
+            <tr><th>P</th><td>67–69</td><td>49–51</td><td>162–170</td><td>50–62</td></tr>
+            <tr><th>M</th><td>69–71</td><td>51–53</td><td>170–175</td><td>62–75</td></tr>
+            <tr><th>G</th><td>71–73</td><td>53–55</td><td>175–180</td><td>75–80</td></tr>
+            <tr><th>GG</th><td>73–76</td><td>55–57</td><td>180–185</td><td>80–85</td></tr>
+            <tr><th>2XL</th><td>76–78</td><td>57–60</td><td>185–190</td><td>85–90</td></tr>
+            <tr><th>3XL</th><td>78–79</td><td>60–63</td><td>190–195</td><td>90–95</td></tr>
+          </tbody>
+        </table>
+        <p class="medidas__nota">A versão Jogador é mais justa ao corpo: se preferir folga, peça um tamanho acima.</p>
+      </div>
+      <div class="tabela-rolagem" data-tabela="feminina" hidden>
+        <table class="tabela-medidas">
+          <thead><tr><th>Tamanho</th><th>Comprimento<small>cm</small></th><th>Largura<small>cm</small></th><th>Sua altura<small>cm</small></th></tr></thead>
+          <tbody>
+            <tr><th>P</th><td>61–63</td><td>40–41</td><td>150–160</td></tr>
+            <tr><th>M</th><td>63–66</td><td>41–44</td><td>160–165</td></tr>
+            <tr><th>G</th><td>66–69</td><td>44–47</td><td>165–170</td></tr>
+            <tr><th>GG</th><td>69–71</td><td>47–50</td><td>170–175</td></tr>
           </tbody>
         </table>
       </div>

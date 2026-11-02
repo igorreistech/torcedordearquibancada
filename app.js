@@ -595,6 +595,17 @@
   sombra.addEventListener('click', fecharCarrinho);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && gaveta.classList.contains('aberta')) fecharCarrinho(); });
 
+  // Abas da tabela de medidas
+  document.querySelector('.abas-medidas').addEventListener('click', (e) => {
+    const aba = e.target.closest('[data-aba]');
+    if (!aba) return;
+    document.querySelectorAll('[data-aba]').forEach((b) => {
+      b.classList.toggle('ativo', b === aba);
+      b.setAttribute('aria-selected', b === aba);
+    });
+    document.querySelectorAll('[data-tabela]').forEach((t) => { t.hidden = t.dataset.tabela !== aba.dataset.aba; });
+  });
+
   // ---------- Inicialização ----------
   document.querySelectorAll('[data-whats]').forEach((a) => {
     a.href = linkWhats(`Olá! Vim pelo site da ${LOJA.nome} e quero tirar uma dúvida.`);
