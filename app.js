@@ -138,8 +138,8 @@
         <p class="preco">${p.precoAntigo ? `<s>${brl(p.precoAntigo)}</s>` : ''}<strong>${brl(p.preco)}</strong></p>
 
         <p class="rotulo">Tamanho <a href="#medidas" class="link-medidas">ver medidas</a></p>
-        <div class="tamanhos">${tamanhosDe(p).map((t) => `<button type="button" data-tam="${t}" ${disponivel(p, t) ? '' : 'disabled title="Esgotado"'}>${t}</button>`).join('')}</div>
-        <p class="estoque-aviso" id="m-estoque"></p>
+        <div class="tamanhos">${tamanhosDe(p).map((t) => `<button type="button" data-tam="${t}" ${disponivel(p, t) ? '' : 'disabled'}>${t}${p.estoque ? `<small>${disponivel(p, t) ? `${disponivel(p, t)} un.` : 'esgotado'}</small>` : ''}</button>`).join('')}</div>
+        <p class="estoque-aviso" id="m-estoque">${p.estoque ? '' : 'Sob encomenda'}</p>
 
         <label class="check"><input type="checkbox" id="m-personalizar"> Personalizar com nome e número <b>+ ${brl(LOJA.precoPersonalizacao)}</b></label>
         <div class="personalizacao" id="m-campos" hidden>
@@ -183,7 +183,10 @@
       document.querySelectorAll('[data-tam]').forEach((b) => b.classList.toggle('ativo', b === tam));
       $('#m-erro').textContent = '';
       const tem = disponivel(sel.p, sel.tamanho);
-      $('#m-estoque').textContent = tem <= 3 ? `Últimas ${tem} unidade${tem > 1 ? 's' : ''} neste tamanho!` : '';
+      const pecas = `peça${tem > 1 ? 's' : ''}`;
+      $('#m-estoque').textContent = !sel.p.estoque ? 'Sob encomenda'
+        : tem <= 3 ? `Últimas ${tem} ${pecas} no tamanho ${sel.tamanho}!` : `${tem} ${pecas} em estoque no tamanho ${sel.tamanho}`;
+      $('#m-estoque').classList.toggle('estoque-aviso--ultimas', Boolean(sel.p.estoque) && tem <= 3);
       sel.qtd = Math.min(sel.qtd, limiteQtd());
       atualizarTotalModal();
     }

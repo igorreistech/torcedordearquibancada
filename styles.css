@@ -161,7 +161,11 @@ input:focus, select:focus, button:focus-visible, .card:focus-visible { outline: 
 .tag--mais-vendida { background: var(--laranja); color: var(--preto); }
 .tag--esgotado { background: #4a4744; }
 .tamanhos button:disabled { opacity: .35; text-decoration: line-through; cursor: not-allowed; }
-.estoque-aviso { color: var(--laranja); font-size: 13px; font-weight: 600; margin-top: 8px; min-height: 0; }
+.estoque-aviso { color: var(--suave); font-size: 13px; font-weight: 600; margin-top: 10px; min-height: 0; }
+.estoque-aviso--ultimas { color: var(--laranja); }
+.tamanhos button { display: grid; justify-items: center; gap: 1px; line-height: 1.2; }
+.tamanhos button small { font-size: 10px; font-weight: 500; color: var(--suave); text-decoration: none; }
+.tamanhos button.ativo small { color: rgba(0, 0, 0, .65); }
 .estoque-aviso:empty { display: none; }
 .btn:disabled { cursor: not-allowed; opacity: .7; }
 .card__desconto { position: absolute; top: 10px; right: 10px; background: var(--texto); color: var(--preto); font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 6px; }
