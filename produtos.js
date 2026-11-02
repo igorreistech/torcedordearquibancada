@@ -13,7 +13,7 @@ const LOJA = {
   tamanhos: ['P', 'M', 'G', 'GG', 'XGG'],
   // InfiniteTag da conta InfinitePay, sem o $ (aparece no canto superior do app).
   // No app: Vendas > Checkout > Configurações > "Habilitar Checkout Integrado".
-  infinitepayHandle: '',
+  infinitepayHandle: 'torcedor',
 };
 
 const CATEGORIAS = [
