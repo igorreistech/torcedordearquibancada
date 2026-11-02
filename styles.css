@@ -282,6 +282,17 @@ tbody th { text-align: left; color: var(--suave); font-weight: 500; }
 .resumo > div > span:first-child { color: var(--suave); }
 .resumo__total { padding-top: 6px; border-top: 1px solid var(--linha); }
 .resumo__total strong { font-size: 18px; }
+.opcoes-frete { display: grid; gap: 8px; }
+.opcoes-frete .rotulo { margin: 8px 0 0; }
+.opcao-frete {
+  display: grid !important; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px !important;
+  padding: 12px 14px; border: 1px solid var(--linha); border-radius: 10px; background: var(--concreto); cursor: pointer; color: var(--texto) !important;
+}
+.opcao-frete:has(input:checked) { border-color: var(--laranja); }
+.opcao-frete input { width: 18px; height: 18px; accent-color: var(--laranja); }
+.opcao-frete b { display: block; font-size: 14px; }
+.opcao-frete small { color: var(--suave); font-size: 12px; }
+.opcao-frete strong { font-size: 15px; }
 .seguro { font-size: 12px; color: var(--suave); text-align: center; }
 .carregando { color: var(--suave); text-align: center; padding: 40px 0; }
 .resultado { text-align: center; padding: 24px 0; display: grid; gap: 12px; justify-items: center; }

@@ -39,7 +39,10 @@
           <h1>Camisas</h1>
           <p id="contagem"></p>
         </div>
-        <button class="btn btn--primario" id="nova">+ Nova camisa</button>
+        <div class="adm-botoes">
+          <button class="btn btn--fantasma" id="abrir-frete">🚚 Frete</button>
+          <button class="btn btn--primario" id="nova">+ Nova camisa</button>
+        </div>
       </div>
       <input type="search" id="adm-busca" class="adm-busca" placeholder="Buscar camisa…">
       <div class="adm-lista" id="lista"></div>
@@ -118,6 +121,26 @@
         <p class="erro" id="editor-erro"></p>
         <button type="button" class="btn btn--fantasma" id="cancelar">Cancelar</button>
         <button class="btn btn--primario" id="salvar">Salvar camisa</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Frete -->
+  <dialog class="modal adm-editor" id="dlg-frete">
+    <form id="form-frete" class="adm-form" novalidate>
+      <div class="adm-form__topo">
+        <h2>Frete por região</h2>
+        <button type="button" class="modal__fechar" data-fechar-frete aria-label="Fechar">×</button>
+      </div>
+      <div class="adm-form__corpo">
+        <p class="ajuda">Para cada região, informe o valor e o prazo (em dias úteis) do PAC e do SEDEX, com base no que os Correios cobram para enviar uma camisa. Deixe em branco o envio que não oferece. Região sem nenhum valor fica com frete a combinar pelo WhatsApp.</p>
+        <div class="adm-frete" id="tabela-frete"></div>
+        <label>Frete PAC grátis a partir de quantas camisas? (0 = nunca)<input name="gratis" type="number" min="0" max="99" inputmode="numeric" value="0"></label>
+      </div>
+      <div class="adm-form__rodape">
+        <p class="erro" id="frete-erro"></p>
+        <button type="button" class="btn btn--fantasma" data-fechar-frete>Cancelar</button>
+        <button class="btn btn--primario">Salvar frete</button>
       </div>
     </form>
   </dialog>

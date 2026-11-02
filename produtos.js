@@ -7,8 +7,6 @@ const LOJA = {
   whatsapp: '5567996333431',              // DDI + DDD + número, só dígitos
   instagram: 'torcedor_de_arquibancada67', // sem o @
   precoPersonalizacao: 25,                // nome + número
-  freteGratisAPartirDe: 2,                // nº de camisas para frete grátis
-  frete: 24.9,                            // frete abaixo do mínimo para frete grátis
   maxParcelas: 12,                        // parcelas no cartão (texto do site)
   tamanhos: ['P', 'M', 'G', 'GG', 'XGG'],      // tamanhos das camisas sob encomenda
   // InfiniteTag da conta InfinitePay, sem o $ (aparece no canto superior do app).
@@ -37,6 +35,23 @@ const TAGS = [
   { id: 'promocao', nome: 'Promoção' },
   { id: 'mais-vendida', nome: 'Mais vendida' },
 ];
+
+// Regiões de frete. O valor e o prazo de cada envio são cadastrados no painel (botão Frete).
+const REGIOES = [
+  { id: 'campo-grande', nome: 'Campo Grande (MS)', desc: 'CEP 79000-000 a 79124-999' },
+  { id: 'ms', nome: 'Interior de MS', desc: 'demais cidades de Mato Grosso do Sul' },
+  { id: 'centro-oeste', nome: 'Centro-Oeste', desc: 'MT, GO e DF' },
+  { id: 'sudeste', nome: 'Sudeste', desc: 'SP, RJ, MG e ES' },
+  { id: 'sul', nome: 'Sul', desc: 'PR, SC e RS' },
+  { id: 'nordeste', nome: 'Nordeste', desc: 'BA, SE, AL, PE, PB, RN, CE, PI e MA' },
+  { id: 'norte', nome: 'Norte', desc: 'PA, AM, AP, RR, AC, RO e TO' },
+];
+const MODALIDADES = [
+  { id: 'pac', nome: 'PAC' },
+  { id: 'sedex', nome: 'SEDEX' },
+];
+// Sem nada cadastrado, o frete é a combinar em todas as regiões.
+const FRETE_PADRAO = { gratisAPartirDe: 0, regioes: {} };
 
 // ============================================================
 //  CATÁLOGO INICIAL — usado só até o primeiro salvamento no painel
@@ -105,7 +120,43 @@ function baixarEstoque(produtos, itens) {
 
 // Recalcula o pedido a partir dos itens do carrinho. O servidor usa esta função
 // para cobrar o preço do catálogo, nunca o valor enviado pelo navegador.
-function calcularPedido(itens, produtos) {
+// Faixas de CEP de cada estado, para saber a região de entrega.
+const FAIXAS_CEP = [
+  [1000, 19999, 'SP'], [20000, 28999, 'RJ'], [29000, 29999, 'ES'], [30000, 39999, 'MG'], [40000, 48999, 'BA'],
+  [49000, 49999, 'SE'], [50000, 56999, 'PE'], [57000, 57999, 'AL'], [58000, 58999, 'PB'], [59000, 59999, 'RN'],
+  [60000, 63999, 'CE'], [64000, 64999, 'PI'], [65000, 65999, 'MA'], [66000, 68899, 'PA'], [68900, 68999, 'AP'],
+  [69000, 69299, 'AM'], [69300, 69399, 'RR'], [69400, 69899, 'AM'], [69900, 69999, 'AC'], [70000, 72799, 'DF'],
+  [72800, 72999, 'GO'], [73000, 73699, 'DF'], [73700, 76799, 'GO'], [76800, 76999, 'RO'], [77000, 77999, 'TO'],
+  [78000, 78899, 'MT'], [79000, 79999, 'MS'], [80000, 87999, 'PR'], [88000, 89999, 'SC'], [90000, 99999, 'RS'],
+];
+const REGIAO_UF = { 'centro-oeste': 'MT GO DF', sudeste: 'SP RJ ES MG', sul: 'PR SC RS', nordeste: 'MA PI CE RN PB PE AL SE BA', norte: 'AM RR AP PA TO RO AC' };
+
+function regiaoDoCep(cep) {
+  const d = String(cep || '').replace(/\D/g, '');
+  if (d.length !== 8) return null;
+  const n = Number(d.slice(0, 5));
+  if (n >= 79000 && n <= 79124) return 'campo-grande';
+  const uf = FAIXAS_CEP.find(([de, ate]) => n >= de && n <= ate)?.[2];
+  if (!uf) return null;
+  if (uf === 'MS') return 'ms';
+  return Object.keys(REGIAO_UF).find((r) => REGIAO_UF[r].split(' ').includes(uf)) || null;
+}
+
+// Formas de envio para um CEP, conforme a tabela do painel. Lista vazia = frete a combinar.
+function opcoesFrete(cep, qtd, tabela) {
+  const regiao = tabela?.regioes?.[regiaoDoCep(cep)];
+  if (!regiao) return [];
+  const gratis = tabela.gratisAPartirDe > 0 && qtd >= tabela.gratisAPartirDe;
+  return MODALIDADES.filter((m) => regiao[m.id]).map((m) => ({
+    id: m.id,
+    nome: m.nome,
+    prazo: regiao[m.id].prazo,
+    valor: gratis && m.id === 'pac' ? 0 : regiao[m.id].valor,
+  }));
+}
+
+// entrega (opcional): { cep, modalidade, frete: tabela de frete }. Sem entrega, o frete ainda não é conhecido.
+function calcularPedido(itens, produtos, entrega) {
   if (!Array.isArray(itens) || !itens.length) throw new Error('Carrinho vazio.');
   const linhas = itens.map((i) => {
     const p = produtos.find((x) => x.id === i.id && x.ativo !== false);
@@ -120,9 +171,41 @@ function calcularPedido(itens, produtos) {
   });
   const qtd = linhas.reduce((s, l) => s + l.qtd, 0);
   const subtotal = arredondar(linhas.reduce((s, l) => s + l.total, 0));
-  const frete = qtd >= LOJA.freteGratisAPartirDe ? 0 : LOJA.frete;
-  const total = arredondar(subtotal + frete);
-  return { linhas, qtd, subtotal, frete, total };
+  let frete = null, modalidade = null, freteACombinar = false;
+  if (entrega) {
+    const opcoes = opcoesFrete(entrega.cep, qtd, entrega.frete);
+    if (!opcoes.length) {
+      frete = 0;
+      freteACombinar = true;
+    } else {
+      modalidade = opcoes.find((o) => o.id === entrega.modalidade);
+      if (!modalidade) throw new Error('Escolha a forma de envio.');
+      frete = modalidade.valor;
+    }
+  }
+  const total = arredondar(subtotal + (frete || 0));
+  return { linhas, qtd, subtotal, frete, modalidade, freteACombinar, total };
+}
+
+// Valida a tabela de frete vinda do painel. Lança Error com mensagem para o dono.
+function validarFrete(c = {}) {
+  const num = (v) => (v === '' || v == null ? null : Number(String(v).replace(',', '.')));
+  const regioes = {};
+  for (const r of REGIOES) {
+    const t = c.regioes?.[r.id] || {};
+    const linha = {};
+    for (const m of MODALIDADES) {
+      const valor = num(t[m.id]?.valor);
+      if (valor === null) continue;
+      if (!Number.isFinite(valor) || valor < 0 || valor > 999) throw new Error(`Valor do ${m.nome} inválido em ${r.nome}.`);
+      const prazo = Math.trunc(num(t[m.id]?.prazo) || 0);
+      if (prazo < 1 || prazo > 90) throw new Error(`Informe o prazo do ${m.nome} em ${r.nome} (em dias úteis).`);
+      linha[m.id] = { valor: arredondar(valor), prazo };
+    }
+    if (Object.keys(linha).length) regioes[r.id] = linha;
+  }
+  const gratis = Math.trunc(Number(c.gratisAPartirDe) || 0);
+  return { gratisAPartirDe: Math.min(Math.max(gratis, 0), 99), regioes };
 }
 
 // Valida e normaliza os dados de entrega. Lança Error com mensagem para o cliente.
@@ -188,5 +271,5 @@ function validarProduto(p = {}) {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { LOJA, CATEGORIAS, PADROES, TAGS, PRODUTOS_PADRAO, tamanhosDe, calcularPedido, conferirEstoque, baixarEstoque, validarCliente, validarProduto };
+  module.exports = { LOJA, CATEGORIAS, PADROES, TAGS, REGIOES, MODALIDADES, FRETE_PADRAO, PRODUTOS_PADRAO, regiaoDoCep, opcoesFrete, validarFrete, tamanhosDe, calcularPedido, conferirEstoque, baixarEstoque, validarCliente, validarProduto };
 }

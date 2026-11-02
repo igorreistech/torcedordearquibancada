@@ -3,8 +3,8 @@
 Loja de camisas: site estático + funções da Vercel (`api/`).
 
 - **Site:** `index.html`, `app.js`, `styles.css`
-- **Painel do dono:** `/admin` (`admin.html`, `admin.js`). Cadastra camisas, fotos, preços, selos e ordem.
-- **Configuração da loja:** `produtos.js` (WhatsApp, Instagram, frete, InfiniteTag da InfinitePay)
+- **Painel do dono:** `/admin` (`admin.html`, `admin.js`). Cadastra camisas (fotos, preços, selos, ordem, tamanhos e estoque) e a tabela de frete por região (PAC e SEDEX).
+- **Configuração da loja:** `produtos.js` (WhatsApp, Instagram, InfiniteTag da InfinitePay)
 - **Pagamento:** Checkout Integrado da InfinitePay (Pix ou cartão). O servidor gera o link com o valor recalculado pelo catálogo e confere o pagamento na volta (`payment_check`).
 - **Catálogo e fotos:** Vercel Blob
 

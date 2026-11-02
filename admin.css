@@ -14,6 +14,14 @@
 .adm-cabecalho { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
 .adm-cabecalho p { color: var(--suave); font-size: 14px; margin-top: 4px; }
 .adm-busca { margin-bottom: 12px; }
+.adm-botoes { display: flex; gap: 8px; flex-wrap: wrap; }
+.adm-frete { display: grid; gap: 10px; }
+.adm-frete__regiao { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 10px; align-items: center; padding: 10px 12px; border: 1px solid var(--linha); border-radius: 12px; background: var(--grafite); }
+.adm-frete__regiao strong { display: block; font-size: 14px; }
+.adm-frete__regiao small { color: var(--suave); font-size: 11px; }
+.adm-frete__mod { display: grid; grid-template-columns: 1fr 64px; gap: 4px; }
+.adm-frete__mod span { grid-column: 1 / -1; font-size: 11px; font-weight: 700; color: var(--suave); }
+.adm-frete__mod input { padding: 8px 8px; font-size: 14px; }
 
 .adm-lista { display: grid; gap: 8px; }
 .adm-item {
@@ -84,4 +92,6 @@
   .adm-item__capa { width: 56px; height: 56px; }
   .adm-item__acoes { grid-column: 1 / -1; justify-content: flex-end; }
   .adm-form .duas { grid-template-columns: 1fr; }
+  .adm-frete__regiao { grid-template-columns: 1fr 1fr; }
+  .adm-frete__regiao > div:first-child { grid-column: 1 / -1; }
 }

@@ -303,6 +303,57 @@
   $('#fechar-editor').addEventListener('click', () => editor.close());
   $('#cancelar').addEventListener('click', () => editor.close());
 
+  // ---------- Frete ----------
+  const dlgFrete = $('#dlg-frete');
+  const formFrete = $('#form-frete');
+  $('#tabela-frete').innerHTML = REGIOES.map((r) => `<div class="adm-frete__regiao">
+      <div><strong>${r.nome}</strong><small>${r.desc}</small></div>
+      ${MODALIDADES.map((m) => `<div class="adm-frete__mod">
+        <span>${m.nome}</span>
+        <input name="${r.id}-${m.id}-valor" inputmode="decimal" placeholder="R$" aria-label="Valor do ${m.nome} para ${r.nome}">
+        <input name="${r.id}-${m.id}-prazo" type="number" min="1" max="90" inputmode="numeric" placeholder="dias" aria-label="Prazo do ${m.nome} para ${r.nome}">
+      </div>`).join('')}
+    </div>`).join('');
+
+  $('#abrir-frete').addEventListener('click', async () => {
+    try {
+      const { frete } = await api('GET', '/api/admin/frete');
+      for (const r of REGIOES) {
+        for (const m of MODALIDADES) {
+          const t = frete.regioes?.[r.id]?.[m.id];
+          formFrete[`${r.id}-${m.id}-valor`].value = t ? paraTexto(t.valor) : '';
+          formFrete[`${r.id}-${m.id}-prazo`].value = t?.prazo ?? '';
+        }
+      }
+      formFrete.gratis.value = frete.gratisAPartirDe || 0;
+      $('#frete-erro').textContent = '';
+      dlgFrete.showModal();
+    } catch (e) {
+      aviso(e.message);
+    }
+  });
+  document.querySelectorAll('[data-fechar-frete]').forEach((b) => b.addEventListener('click', () => dlgFrete.close()));
+
+  formFrete.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const campo = (nome) => formFrete[nome].value.trim();
+    const dados = {
+      gratisAPartirDe: campo('gratis'),
+      regioes: Object.fromEntries(REGIOES.map((r) => [r.id, Object.fromEntries(MODALIDADES.map((m) => [m.id, {
+        valor: campo(`${r.id}-${m.id}-valor`).replace(/^R\$\s*/, ''),
+        prazo: campo(`${r.id}-${m.id}-prazo`),
+      }]))])),
+    };
+    try { validarFrete(dados); } catch (err) { return ($('#frete-erro').textContent = err.message); }
+    try {
+      await api('PUT', '/api/admin/frete', { frete: dados });
+      dlgFrete.close();
+      aviso('Frete salvo ✓');
+    } catch (err) {
+      $('#frete-erro').textContent = err.message;
+    }
+  });
+
   // ---------- Aviso ----------
   let timerAviso;
   function aviso(texto) {

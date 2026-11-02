@@ -1,5 +1,5 @@
 const { calcularPedido, conferirEstoque, validarCliente } = require('../produtos.js');
-const { lerCatalogo, salvarPedido } = require('../lib/catalogo');
+const { lerCatalogo, lerFrete, salvarPedido } = require('../lib/catalogo');
 const { handle, cabecalhos } = require('../lib/infinitepay');
 
 const brl = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -13,10 +13,10 @@ module.exports = async (req, res) => {
 
   let pedido, cliente;
   try {
-    const produtos = await lerCatalogo({ atualizado: true });
-    pedido = calcularPedido(req.body?.itens, produtos);
-    conferirEstoque(req.body.itens, produtos);
+    const [produtos, frete] = await Promise.all([lerCatalogo({ atualizado: true }), lerFrete({ atualizado: true })]);
     cliente = validarCliente(req.body?.cliente);
+    pedido = calcularPedido(req.body?.itens, produtos, { cep: cliente.cep, modalidade: req.body?.modalidade, frete });
+    conferirEstoque(req.body.itens, produtos);
   } catch (e) {
     return res.status(400).json({ erro: e.message });
   }
@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
     `${l.produto.nome} ${l.produto.temporada} (${l.produto.versao}) - Tam ${l.tamanho}` +
     (l.nome || l.numero ? ` - Pers. ${[l.nome, l.numero].filter(Boolean).join(' ')}` : '');
   const items = pedido.linhas.map((l) => ({ quantity: l.qtd, price: centavos(l.unitario), description: descricao(l) }));
-  if (pedido.frete) items.push({ quantity: 1, price: centavos(pedido.frete), description: 'Frete' });
+  if (pedido.frete) items.push({ quantity: 1, price: centavos(pedido.frete), description: `Frete ${pedido.modalidade.nome} (até ${pedido.modalidade.prazo} dias úteis)` });
 
   const origem = `https://${req.headers['x-forwarded-host'] || req.headers.host}`;
   const corpo = {
@@ -58,6 +58,6 @@ module.exports = async (req, res) => {
   // Itens do pedido (sem dados do cliente), para baixar o estoque quando o pagamento cair.
   await salvarPedido(referencia, pedido.linhas.map((l) => ({ id: l.produto.id, tamanho: l.tamanho, qtd: l.qtd }))).catch(console.error);
 
-  console.log('Pedido', referencia, brl(pedido.total), JSON.stringify({ itens: items.map((i) => `${i.quantity}x ${i.description}`), cliente }));
+  console.log('Pedido', referencia, brl(pedido.total), JSON.stringify({ itens: items.map((i) => `${i.quantity}x ${i.description}`), freteACombinar: pedido.freteACombinar, cliente }));
   res.json({ url, referencia, valor: pedido.total });
 };

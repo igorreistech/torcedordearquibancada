@@ -6,6 +6,7 @@
   const linkWhats = (msg) => `https://wa.me/${LOJA.whatsapp}?text=${encodeURIComponent(msg)}`;
 
   let produtos = [];
+  let tabelaFrete = FRETE_PADRAO;
   const produto = (id) => produtos.find((p) => p.id === id);
 
   // ---------- Camisa ilustrada (usada quando o produto não tem foto) ----------
@@ -60,6 +61,16 @@
 
   // ---------- Catálogo ----------
   const filtro = { categoria: 'todas', busca: '', ordem: 'destaque' };
+
+  async function carregarFrete() {
+    if (location.protocol === 'file:') return FRETE_PADRAO;
+    try {
+      const r = await fetch('/api/frete');
+      return r.ok ? await r.json() : FRETE_PADRAO;
+    } catch {
+      return FRETE_PADRAO;
+    }
+  }
 
   async function carregarProdutos() {
     // Abrindo o arquivo direto do computador não há servidor: mostra o catálogo inicial.
@@ -237,7 +248,7 @@
   function resumoHTML(p) {
     return `<div class="resumo">
       <div><span>Subtotal</span><span>${brl(p.subtotal)}</span></div>
-      <div><span>Frete</span><span>${p.frete ? brl(p.frete) : 'Grátis'}</span></div>
+      <div><span>Frete${p.modalidade ? ` (${p.modalidade.nome})` : ''}</span><span>${p.frete === null ? 'calculado na entrega' : p.freteACombinar ? 'a combinar' : p.frete ? brl(p.frete) : 'Grátis'}</span></div>
       <div class="resumo__total"><span>Total</span><strong>${brl(p.total)}</strong></div>
     </div>`;
   }
@@ -273,10 +284,12 @@
     if (!qtd) return;
     const pedido = pedidoAtual();
     $('#resumo-carrinho').innerHTML = resumoHTML(pedido);
-    const falta = LOJA.freteGratisAPartirDe - qtd;
-    $('#frete').innerHTML = falta <= 0
-      ? '✅ <b>Frete grátis</b> garantido!'
-      : `Falta${falta > 1 ? 'm' : ''} <b>${falta} camisa${falta > 1 ? 's' : ''}</b> para o frete grátis.`;
+    const minimo = tabelaFrete.gratisAPartirDe;
+    const falta = minimo - qtd;
+    $('#frete').hidden = !minimo;
+    $('#frete').innerHTML = !minimo ? '' : falta <= 0
+      ? '✅ <b>Frete PAC grátis</b> neste pedido!'
+      : `Falta${falta > 1 ? 'm' : ''} <b>${falta} camisa${falta > 1 ? 's' : ''}</b> para o frete PAC grátis.`;
   }
 
   $('#itens').addEventListener('click', (e) => {
@@ -310,7 +323,7 @@
     });
     $('#gaveta-titulo').textContent = TITULOS[nova];
     $('#voltar').hidden = nova !== 'dados';
-    if (nova === 'dados') $('#dados-resumo').innerHTML = resumoHTML(pedidoAtual());
+    if (nova === 'dados') renderOpcoesFrete();
     $('#gaveta-corpo').scrollTop = 0;
     renderCarrinho();
   }
@@ -335,6 +348,8 @@
   form.addEventListener('input', async (e) => {
     const campo = e.target.name;
     if (mascaras[campo]) e.target.value = mascaras[campo](e.target.value.replace(/\D/g, ''));
+    if (campo === 'cep') renderOpcoesFrete();
+    if (campo === 'modalidade') { modalidade = e.target.value; atualizarResumoDados(); }
     if (campo === 'uf') e.target.value = e.target.value.toUpperCase();
     if (campo === 'cep' && e.target.value.length === 9) {
       try {
@@ -349,6 +364,37 @@
       } catch {}
     }
   });
+
+  // Formas de envio (PAC/SEDEX) conforme a região do CEP
+  let modalidade = null;
+  const cepDigitado = () => form.cep.value.replace(/\D/g, '');
+  const qtdCarrinho = () => carrinho.reduce((s, i) => s + i.qtd, 0);
+
+  function atualizarResumoDados() {
+    try {
+      const entrega = cepDigitado().length === 8 ? { cep: cepDigitado(), modalidade, frete: tabelaFrete } : null;
+      $('#dados-resumo').innerHTML = resumoHTML(calcularPedido(carrinho, produtos, entrega));
+    } catch {}
+  }
+
+  function renderOpcoesFrete() {
+    const el = $('#opcoes-frete');
+    if (cepDigitado().length !== 8) {
+      el.innerHTML = '';
+      modalidade = null;
+      return atualizarResumoDados();
+    }
+    const opcoes = opcoesFrete(cepDigitado(), qtdCarrinho(), tabelaFrete);
+    if (!opcoes.some((o) => o.id === modalidade)) modalidade = opcoes[0]?.id || null;
+    el.innerHTML = opcoes.length
+      ? '<p class="rotulo">Forma de envio</p>' + opcoes.map((o) => `<label class="opcao-frete">
+          <input type="radio" name="modalidade" value="${o.id}" ${o.id === modalidade ? 'checked' : ''}>
+          <span><b>${o.nome}</b><small>até ${o.prazo} dias úteis</small></span>
+          <strong>${o.valor ? brl(o.valor) : 'Grátis'}</strong>
+        </label>`).join('')
+      : '<p class="frete">📦 O frete para a sua região é combinado depois pelo WhatsApp e não entra neste pagamento.</p>';
+    atualizarResumoDados();
+  }
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -371,7 +417,7 @@
       const r = await fetch('/api/pagamento', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itens: carrinho, cliente }),
+        body: JSON.stringify({ itens: carrinho, cliente, modalidade }),
       });
       const dados = await r.json().catch(() => ({}));
       if (!r.ok || !dados.url) throw new Error(dados.erro || 'Não foi possível gerar o pagamento. Tente de novo.');
@@ -484,13 +530,13 @@
     a.rel = 'noopener';
   });
   $('#link-instagram').href = `https://www.instagram.com/${LOJA.instagram}/`;
-  $('#promo-qtd').textContent = LOJA.freteGratisAPartirDe;
   $('#ano').textContent = new Date().getFullYear();
   renderChips();
 
-  carregarProdutos()
-    .then((lista) => {
+  Promise.all([carregarProdutos(), carregarFrete()])
+    .then(([lista, frete]) => {
       produtos = lista;
+      tabelaFrete = frete;
       // Descarta do carrinho salvo o que saiu do catálogo
       carrinho = carrinho.filter((i) => produto(i.id) && tamanhosDe(produto(i.id)).includes(i.tamanho));
       const destaque = produtos.slice(0, 2);
