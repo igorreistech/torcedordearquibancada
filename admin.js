@@ -170,6 +170,38 @@
   const paraNumero = (v) => Number(String(v).replace(/\./g, '').replace(',', '.'));
   const paraTexto = (v) => (v == null ? '' : String(v).replace('.', ','));
 
+  // Versões: as padrão, as que já estão em uso nas camisas e as cadastradas agora
+  const VERSOES_PADRAO = ['Torcedor', 'Jogador', 'Feminina'];
+  const versoesNovas = [];
+  const NOVA = '__nova';
+
+  function renderVersoes(atual) {
+    const lista = [...new Set([...VERSOES_PADRAO, ...produtos.map((p) => p.versao).filter(Boolean), ...versoesNovas])];
+    if (atual && !lista.includes(atual)) lista.push(atual);
+    $('#versao').innerHTML = lista.map((v) => `<option>${esc(v)}</option>`).join('') + `<option value="${NOVA}">+ Cadastrar nova versão…</option>`;
+    $('#versao').value = atual || lista[0];
+    $('#nova-versao').hidden = true;
+  }
+
+  function adicionarVersao() {
+    const nome = $('#nova-versao-nome').value.trim();
+    if (!nome) return $('#nova-versao-nome').focus();
+    const versao = nome[0].toUpperCase() + nome.slice(1);
+    versoesNovas.push(versao);
+    renderVersoes(versao);
+  }
+
+  $('#versao').addEventListener('change', () => {
+    if ($('#versao').value !== NOVA) return ($('#nova-versao').hidden = true);
+    $('#nova-versao').hidden = false;
+    $('#nova-versao-nome').value = '';
+    $('#nova-versao-nome').focus();
+  });
+  $('#nova-versao-ok').addEventListener('click', adicionarVersao);
+  $('#nova-versao-nome').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); adicionarVersao(); }
+  });
+
   function abrirEditor(i) {
     editando = i;
     const p = produtos[i] || { categoria: CATEGORIAS[0].id, versao: 'Torcedor', cores: ['#ffffff', '#111111', '#111111'], padrao: 'solido', tags: [], fotos: [], ativo: true };
@@ -177,7 +209,7 @@
     form.reset();
     form.nome.value = p.nome || '';
     form.temporada.value = p.temporada || '';
-    form.versao.value = p.versao || '';
+    renderVersoes(p.versao || 'Torcedor');
     form.categoria.value = p.categoria;
     form.preco.value = paraTexto(p.preco);
     form.precoAntigo.value = paraTexto(p.precoAntigo);
@@ -260,6 +292,10 @@
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (enviando) return ($('#editor-erro').textContent = 'Aguarde terminar o envio das fotos.');
+    if (form.versao.value === NOVA) {
+      if (!$('#nova-versao-nome').value.trim()) return ($('#editor-erro').textContent = 'Digite o nome da nova versão e clique em Adicionar.');
+      adicionarVersao();
+    }
     const atual = produtos[editando];
     const dados = {
       id: atual?.id || `${slug(`${form.nome.value} ${form.temporada.value}`) || 'camisa'}-${Math.random().toString(36).slice(2, 6)}`,

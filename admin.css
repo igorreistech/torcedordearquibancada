@@ -15,6 +15,9 @@
 .adm-cabecalho p { color: var(--suave); font-size: 14px; margin-top: 4px; }
 .adm-busca { margin-bottom: 12px; }
 .adm-botoes { display: flex; gap: 8px; flex-wrap: wrap; }
+.adm-nova-versao { display: flex; gap: 8px; }
+.adm-nova-versao[hidden] { display: none; }
+.adm-nova-versao .btn { padding: 9px 16px; font-size: 14px; }
 .adm-frete-medidas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
 
 .adm-lista { display: grid; gap: 8px; }

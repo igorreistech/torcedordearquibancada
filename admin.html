@@ -75,9 +75,12 @@
           <div class="duas">
             <label>Temporada<input name="temporada" placeholder="Ex.: 25/26" maxlength="12"></label>
             <label>Versão
-              <input name="versao" list="versoes" placeholder="Torcedor" maxlength="20">
-              <datalist id="versoes"><option>Torcedor</option><option>Jogador</option><option>Retrô</option><option>Feminina</option><option>Infantil</option></datalist>
+              <select name="versao" id="versao"></select>
             </label>
+          </div>
+          <div class="adm-nova-versao" id="nova-versao" hidden>
+            <input id="nova-versao-nome" placeholder="Nome da nova versão (ex.: Retrô, Infantil)" maxlength="20" aria-label="Nome da nova versão">
+            <button type="button" class="btn btn--fantasma" id="nova-versao-ok">Adicionar</button>
           </div>
           <label>Categoria<select name="categoria" id="categoria" required></select></label>
           <div class="duas">
