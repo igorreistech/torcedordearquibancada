@@ -47,20 +47,20 @@ const c = (id, nome, temporada, versao, categoria, preco, precoAntigo, cores, pa
   ({ id, nome, temporada, versao, categoria, preco, precoAntigo, cores, padrao, tags, fotos: [], ativo: true });
 
 const PRODUTOS_PADRAO = [
-  c('fla-25', 'Flamengo I', '25/26', 'Torcedor', 'brasileirao', 149.9, 199.9, ['#c8102e', '#111111', '#111111'], 'listras-horizontais', ['mais-vendida']),
-  c('cor-25', 'Corinthians I', '25/26', 'Torcedor', 'brasileirao', 149.9, 199.9, ['#f4f4f4', '#f4f4f4', '#111111'], 'solido'),
-  c('pal-25', 'Palmeiras I', '25/26', 'Jogador', 'brasileirao', 189.9, 239.9, ['#006437', '#006437', '#ffffff'], 'solido', ['lancamento']),
-  c('spfc-25', 'São Paulo I', '25/26', 'Torcedor', 'brasileirao', 149.9, null, ['#ffffff', '#d7131d', '#111111'], 'faixa-horizontal'),
-  c('gre-25', 'Grêmio I', '25/26', 'Torcedor', 'brasileirao', 149.9, null, ['#0d80bf', '#111111', '#ffffff'], 'listras-verticais'),
-  c('vas-25', 'Vasco I', '25/26', 'Torcedor', 'brasileirao', 149.9, 179.9, ['#111111', '#ffffff', '#ffffff'], 'faixa-diagonal', ['promocao']),
-  c('rma-25', 'Real Madrid I', '25/26', 'Jogador', 'europa', 189.9, null, ['#fafafa', '#fafafa', '#c9a227'], 'solido', ['lancamento']),
-  c('bar-25', 'Barcelona I', '25/26', 'Torcedor', 'europa', 159.9, 199.9, ['#a50044', '#004d98', '#edbb00'], 'listras-verticais', ['mais-vendida']),
-  c('mci-25', 'Manchester City I', '25/26', 'Torcedor', 'europa', 159.9, null, ['#6cabdd', '#6cabdd', '#ffffff'], 'solido'),
-  c('bra-26', 'Brasil I', '2026', 'Torcedor', 'selecoes', 169.9, 219.9, ['#ffdc02', '#ffdc02', '#009739'], 'solido', ['lancamento', 'mais-vendida']),
-  c('arg-26', 'Argentina I', '2026', 'Torcedor', 'selecoes', 169.9, null, ['#ffffff', '#75aadb', '#111111'], 'listras-verticais'),
-  c('bra-70', 'Brasil Retrô', '1970', 'Retrô', 'retro', 169.9, null, ['#ffd400', '#ffd400', '#0a8f3c'], 'solido'),
-  c('mil-89', 'Milan Retrô', '88/89', 'Retrô', 'retro', 169.9, 199.9, ['#d40000', '#111111', '#ffffff'], 'listras-verticais', ['promocao']),
-  c('fla-81', 'Flamengo Retrô', '1981', 'Retrô', 'retro', 169.9, null, ['#c8102e', '#111111', '#ffffff'], 'listras-horizontais'),
+  c('fla-26', 'Flamengo I', '26/27', 'Torcedor', 'brasileirao', 165, null, ['#c8102e', '#111111', '#111111'], 'listras-horizontais', ['mais-vendida']),
+  c('cor-26', 'Corinthians I', '26/27', 'Torcedor', 'brasileirao', 165, null, ['#f4f4f4', '#f4f4f4', '#111111'], 'solido'),
+  c('pal-26', 'Palmeiras I', '26/27', 'Jogador', 'brasileirao', 200, null, ['#006437', '#006437', '#ffffff'], 'solido', ['lancamento']),
+  c('spfc-26', 'São Paulo I', '26/27', 'Torcedor', 'brasileirao', 165, null, ['#ffffff', '#d7131d', '#111111'], 'faixa-horizontal'),
+  c('gre-26', 'Grêmio I', '26/27', 'Torcedor', 'brasileirao', 165, null, ['#0d80bf', '#111111', '#ffffff'], 'listras-verticais'),
+  c('vas-25', 'Vasco I', '25/26', 'Torcedor', 'brasileirao', 90, 165, ['#111111', '#ffffff', '#ffffff'], 'faixa-diagonal', ['promocao']),
+  c('rma-26', 'Real Madrid I', '26/27', 'Jogador', 'europa', 200, null, ['#fafafa', '#fafafa', '#c9a227'], 'solido', ['lancamento']),
+  c('bar-26', 'Barcelona I', '26/27', 'Torcedor', 'europa', 165, null, ['#a50044', '#004d98', '#edbb00'], 'listras-verticais', ['mais-vendida']),
+  c('psg-26', 'PSG I', '26/27', 'Jogador', 'europa', 200, null, ['#0b1f4b', '#0b1f4b', '#d7131d'], 'faixa-horizontal'),
+  c('bra-26', 'Brasil I', '2026', 'Torcedor', 'selecoes', 165, null, ['#ffdc02', '#ffdc02', '#009739'], 'solido', ['lancamento', 'mais-vendida']),
+  c('arg-26', 'Argentina I', '2026', 'Torcedor', 'selecoes', 165, null, ['#ffffff', '#75aadb', '#111111'], 'listras-verticais'),
+  c('bra-fem-26', 'Brasil I Feminina', '2026', 'Feminina', 'selecoes', 140, null, ['#ffdc02', '#ffdc02', '#009739'], 'solido'),
+  c('bra-70', 'Brasil Retrô', '1970', 'Retrô', 'retro', 165, null, ['#ffd400', '#ffd400', '#0a8f3c'], 'solido'),
+  c('mil-89', 'Milan Retrô', '88/89', 'Retrô', 'retro', 90, 165, ['#d40000', '#111111', '#ffffff'], 'listras-verticais', ['promocao']),
 ];
 
 // ============================================================

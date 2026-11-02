@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <title>Painel — Torcedor de Arquibancada</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230d0f0e'/%3E%3Cpath d='M5 25h22v-4H5zM9 19h18v-4H9zM13 13h14V9H13z' fill='%23f5d90a'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 1l14 4-1 16q-2 7-13 10Q5 28 3 21L2 5z' fill='%23ff6b00'/%3E%3Cpath d='M16 6l9 3-1 11q-1 5-8 7-7-2-8-7L7 9z' fill='%230b0b0b'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,700;0,800;1,700;1,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="admin.css">
 </head>
@@ -16,7 +16,7 @@
   <header class="topo">
     <div class="container topo__linha">
       <a href="/" class="logo" target="_blank" rel="noopener">
-        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 27h26v-5H3zM8 20h21v-5H8zM13 13h16V8H13z" /></svg>
+        <span class="logo__escudo" data-escudo></span>
         <span>Torcedor<br><b>Painel da loja</b></span>
       </a>
       <button class="btn btn--fantasma adm-sair" id="sair" hidden>Sair</button>
@@ -108,6 +108,7 @@
 
   <div class="aviso" id="aviso" role="status" aria-live="polite"></div>
 
+  <script src="logo.js"></script>
   <script src="produtos.js"></script>
   <script src="admin.js"></script>
 </body>

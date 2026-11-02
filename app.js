@@ -381,7 +381,7 @@
         initialization: { amount: pedido.total, payer: { email: cliente.email } },
         customization: {
           paymentMethods: { creditCard: 'all', bankTransfer: ['pix'], maxInstallments: LOJA.maxParcelas },
-          visual: { style: { theme: 'dark' } },
+          visual: { style: { theme: 'dark', customVariables: { baseColor: '#ff6b00' } } },
         },
         callbacks: {
           onReady: () => {},
@@ -562,7 +562,7 @@
       produtos = lista;
       // Descarta do carrinho salvo o que saiu do catálogo
       carrinho = carrinho.filter((i) => produto(i.id) && LOJA.tamanhos.includes(i.tamanho));
-      const destaque = produtos.slice(0, 3);
+      const destaque = produtos.slice(0, 2);
       $('#hero-camisas').innerHTML = destaque.map((p) => `<div class="hero__camisa">${midia(p)}</div>`).join('');
       renderGrade();
       salvar();
