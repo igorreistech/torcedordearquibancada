@@ -13,7 +13,7 @@ module.exports = async (req, res) => {
 
   let pedido, cliente;
   try {
-    pedido = calcularPedido(req.body?.itens, await lerCatalogo());
+    pedido = calcularPedido(req.body?.itens, await lerCatalogo({ atualizado: true }));
     cliente = validarCliente(req.body?.cliente);
   } catch (e) {
     return res.status(400).json({ erro: e.message });

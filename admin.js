@@ -27,7 +27,7 @@
     const { produtos: salvos } = await api('PUT', '/api/admin/produtos', { produtos: nova });
     produtos = salvos;
     renderLista();
-    aviso('Salvo ✓ — o site atualiza em até 1 minuto');
+    aviso('Salvo ✓ — o site atualiza em até 2 minutos');
   }
 
   // ---------- Login ----------

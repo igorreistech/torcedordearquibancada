@@ -7,7 +7,7 @@ module.exports = async (req, res) => {
   if (!autorizado(req)) return res.status(401).json({ erro: 'Senha incorreta.' });
 
   try {
-    if (req.method === 'GET') return res.json({ produtos: await lerCatalogo() });
+    if (req.method === 'GET') return res.json({ produtos: await lerCatalogo({ atualizado: true }) });
 
     if (req.method === 'PUT') {
       const lista = req.body?.produtos;
@@ -20,7 +20,7 @@ module.exports = async (req, res) => {
       }
       if (new Set(produtos.map((p) => p.id)).size !== produtos.length) return res.status(400).json({ erro: 'Há camisas com identificador repetido.' });
 
-      const antes = await lerCatalogo();
+      const antes = await lerCatalogo({ atualizado: true });
       await salvarCatalogo(produtos);
       const usadas = new Set(produtos.flatMap((p) => p.fotos));
       await apagarFotos(antes.flatMap((p) => p.fotos || []).filter((u) => !usadas.has(u))).catch(console.error);
