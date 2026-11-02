@@ -285,7 +285,13 @@
       : `<div class="carrinho-vazio"><p>Seu carrinho está vazio.</p><a href="#catalogo" class="btn btn--primario" data-fechar>Ver camisas</a></div>`;
 
     if (!qtd) return;
-    const pedido = pedidoAtual();
+    renderSimOpcoes();
+    let pedido;
+    try {
+      pedido = calcularPedido(carrinho, produtos, cepSimulado().length === 8 ? { cep: cepSimulado(), modalidade, frete: tabelaFrete } : null);
+    } catch {
+      pedido = pedidoAtual();
+    }
     $('#resumo-carrinho').innerHTML = resumoHTML(pedido);
     const minimo = tabelaFrete.gratisAPartirDe;
     const falta = minimo - qtd;
@@ -387,17 +393,56 @@
       modalidade = null;
       return atualizarResumoDados();
     }
-    const opcoes = opcoesFrete(cepDigitado(), qtdCarrinho(), tabelaFrete);
+    if (simCep.value !== form.cep.value) simCep.value = form.cep.value;
+    el.innerHTML = opcoesHTML(cepDigitado(), 'modalidade', '<p class="rotulo">Forma de envio</p>');
+    atualizarResumoDados();
+  }
+
+  // Lista PAC/SEDEX de um CEP. Mantém o envio já escolhido quando ele existe para a região.
+  function opcoesHTML(cep, nome, titulo = '') {
+    const opcoes = opcoesFrete(cep, qtdCarrinho(), tabelaFrete);
     if (!opcoes.some((o) => o.id === modalidade)) modalidade = opcoes[0]?.id || null;
-    el.innerHTML = opcoes.length
-      ? '<p class="rotulo">Forma de envio</p>' + opcoes.map((o) => `<label class="opcao-frete">
-          <input type="radio" name="modalidade" value="${o.id}" ${o.id === modalidade ? 'checked' : ''}>
-          <span><b>${o.nome}</b><small>até ${o.prazo} dias úteis</small></span>
+    return opcoes.length
+      ? titulo + opcoes.map((o) => `<label class="opcao-frete">
+          <input type="radio" name="${nome}" value="${o.id}" ${o.id === modalidade ? 'checked' : ''}>
+          <span><b>${o.nome}</b><small>até ${o.prazo} ${o.prazo > 1 ? 'dias úteis' : 'dia útil'}</small></span>
           <strong>${o.valor ? brl(o.valor) : 'Grátis'}</strong>
         </label>`).join('')
       : '<p class="frete">📦 O frete para a sua região é combinado depois pelo WhatsApp e não entra neste pagamento.</p>';
-    atualizarResumoDados();
   }
+
+  // ---------- Simulador de frete no carrinho ----------
+  // O CEP e o envio escolhidos aqui seguem para a etapa de entrega.
+  const simCep = $('#sim-cep');
+  const cepSimulado = () => simCep.value.replace(/\D/g, '');
+
+  function renderSimOpcoes() {
+    const cep = cepSimulado();
+    $('#sim-opcoes').innerHTML = cep.length === 8 ? opcoesHTML(cep, 'sim-modalidade') : '';
+  }
+
+  function simular() {
+    const cep = cepSimulado();
+    if (cep.length !== 8) {
+      $('#sim-opcoes').innerHTML = '<p class="erro">Digite o CEP completo, com 8 números.</p>';
+      return simCep.focus();
+    }
+    // Leva o CEP para o formulário de entrega (o endereço é buscado pelo CEP)
+    if (form.cep.value.replace(/\D/g, '') !== cep) {
+      form.cep.value = mascaras.cep(cep);
+      form.cep.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    renderCarrinho();
+  }
+
+  simCep.addEventListener('input', () => { simCep.value = mascaras.cep(simCep.value.replace(/\D/g, '')); });
+  simCep.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); simular(); } });
+  $('#sim-calcular').addEventListener('click', simular);
+  $('#sim-opcoes').addEventListener('change', (e) => {
+    if (e.target.name !== 'sim-modalidade') return;
+    modalidade = e.target.value;
+    renderCarrinho();
+  });
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();

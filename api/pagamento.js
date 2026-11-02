@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
     `${l.produto.nome} ${l.produto.temporada} (${l.produto.versao}) - Tam ${l.tamanho}` +
     (l.nome || l.numero ? ` - Pers. ${[l.nome, l.numero].filter(Boolean).join(' ')}` : '');
   const items = pedido.linhas.map((l) => ({ quantity: l.qtd, price: centavos(l.unitario), description: descricao(l) }));
-  if (pedido.frete) items.push({ quantity: 1, price: centavos(pedido.frete), description: `Frete ${pedido.modalidade.nome} (até ${pedido.modalidade.prazo} dias úteis)` });
+  if (pedido.frete) items.push({ quantity: 1, price: centavos(pedido.frete), description: `Frete ${pedido.modalidade.nome} (até ${pedido.modalidade.prazo} ${pedido.modalidade.prazo > 1 ? 'dias úteis' : 'dia útil'})` });
 
   const origem = `https://${req.headers['x-forwarded-host'] || req.headers.host}`;
   const corpo = {

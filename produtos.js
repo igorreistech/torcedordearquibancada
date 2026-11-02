@@ -7,6 +7,8 @@ const LOJA = {
   whatsapp: '5567996333431',              // DDI + DDD + número, só dígitos
   instagram: 'torcedor_de_arquibancada67', // sem o @
   precoPersonalizacao: 25,                // nome + número
+  // Cidade de onde as camisas são enviadas: CEPs nesta faixa usam a região "local" do frete.
+  origem: { cep: '79910-134', cidade: 'Antônio João', uf: 'MS', faixaCep: ['79910-000', '79919-999'] },
   maxParcelas: 12,                        // parcelas no cartão (texto do site)
   tamanhos: ['P', 'M', 'G', 'GG', 'XGG'],      // tamanhos das camisas sob encomenda
   // InfiniteTag da conta InfinitePay, sem o $ (aparece no canto superior do app).
@@ -38,8 +40,8 @@ const TAGS = [
 
 // Regiões de frete. O valor e o prazo de cada envio são cadastrados no painel (botão Frete).
 const REGIOES = [
-  { id: 'campo-grande', nome: 'Campo Grande (MS)', desc: 'CEP 79000-000 a 79124-999' },
-  { id: 'ms', nome: 'Interior de MS', desc: 'demais cidades de Mato Grosso do Sul' },
+  { id: 'local', nome: `${LOJA.origem.cidade} (${LOJA.origem.uf})`, desc: `cidade de origem: CEP ${LOJA.origem.faixaCep.join(' a ')}` },
+  { id: 'ms', nome: 'Mato Grosso do Sul', desc: 'demais cidades de MS, incluindo Campo Grande' },
   { id: 'centro-oeste', nome: 'Centro-Oeste', desc: 'MT, GO e DF' },
   { id: 'sudeste', nome: 'Sudeste', desc: 'SP, RJ, MG e ES' },
   { id: 'sul', nome: 'Sul', desc: 'PR, SC e RS' },
@@ -135,7 +137,8 @@ function regiaoDoCep(cep) {
   const d = String(cep || '').replace(/\D/g, '');
   if (d.length !== 8) return null;
   const n = Number(d.slice(0, 5));
-  if (n >= 79000 && n <= 79124) return 'campo-grande';
+  const [de, ate] = LOJA.origem.faixaCep.map((c) => Number(c.replace(/\D/g, '').slice(0, 5)));
+  if (n >= de && n <= ate) return 'local';
   const uf = FAIXAS_CEP.find(([de, ate]) => n >= de && n <= ate)?.[2];
   if (!uf) return null;
   if (uf === 'MS') return 'ms';

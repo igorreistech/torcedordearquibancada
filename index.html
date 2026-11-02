@@ -196,6 +196,15 @@
 
     <div class="gaveta__rodape" id="gaveta-rodape" hidden>
       <p class="frete" id="frete"></p>
+      <div class="simular-frete">
+        <label for="sim-cep">Calcular frete e prazo</label>
+        <div class="simular-frete__linha">
+          <input id="sim-cep" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="Digite seu CEP">
+          <button type="button" class="btn btn--fantasma" id="sim-calcular">Calcular</button>
+        </div>
+        <a href="https://buscacepinter.correios.com.br/app/endereco/index.php" target="_blank" rel="noopener" class="simular-frete__ajuda">Não sei meu CEP</a>
+        <div id="sim-opcoes" class="opcoes-frete"></div>
+      </div>
       <div id="resumo-carrinho"></div>
       <button class="btn btn--primario btn--bloco" id="continuar">Continuar</button>
       <p class="seguro">🔒 Pagamento seguro com Pix ou cartão via InfinitePay</p>
